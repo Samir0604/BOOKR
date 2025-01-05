@@ -7,7 +7,7 @@ export default function HomeScreen() {
         <SafeAreaView>
 
             <Link className="font-bold text-2xl" href="(auth)/onboarding">Onboarding</Link>
-            <Link className="font-bold text-2xl" href="(auth)/onboarding">Onboarding</Link>
+
 
 
         </SafeAreaView>
