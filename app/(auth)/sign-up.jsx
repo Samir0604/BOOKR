@@ -7,13 +7,20 @@ import Apple from "@/assets/loginprovider/apple.png"
 import Facebook from "@/assets/loginprovider/facebook.png"
 import Spotify from "@/assets/loginprovider/spotify.png"
 import Feather from '@expo/vector-icons/Feather';
+import { router } from 'expo-router'
 
 
 const Buttons = ({ name, provider, mail = false }) => (
-  <TouchableOpacity className='border rounded-3xl py-4  items-center flex-row'>
+  <TouchableOpacity 
+  onPress={()=>{
+    if(mail){
+      router.push("/sign-up-email")
+    }
+  }}
+  className='border rounded-3xl py-4  items-center flex-row'>
     <View className='flex-row items-center ml-[21%]'>
       {!mail ? <Image source={provider} className='size-9' /> : <Feather name="mail" size={28} color="black" className='ml-0.5 mr-0.5' />}
-      <Text className='font-bold text-xl ml-3'>Weiter mit {name}</Text>
+       <Text className='font-bold text-xl ml-3'>Weiter mit {name}</Text>
     </View>
   </TouchableOpacity>
 )

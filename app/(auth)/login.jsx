@@ -1,6 +1,5 @@
 import { View, Text, SafeAreaView, Image, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard, ScrollView } from 'react-native'
 import React, { useState } from 'react'
-import Logo from "@/assets/logo/TemporaryBOOKRLogo.png"
 
 import Spotify from "@/assets/loginprovider/spotify.png"
 import Google from "@/assets/loginprovider/google.png"
@@ -30,10 +29,8 @@ const RoundedImage = ({image})=>{
     <SafeAreaView className='bg-white flex-1'>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView 
-        contentContainerClassName='mt-24 flex-col bg-white items-center flex-1'
+        contentContainerClassName='mt-3 flex-col bg-white items-center flex-1'
         >
-            <Image source={Logo}/>
-            <Text className='text-2xl color-[#8C8C8C] font-semibold'>Jetzt bei BOOKR anmelden</Text>
 
             <TextInput 
             value = {email}

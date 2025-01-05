@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 
 
 const Onboarding = () => {
@@ -31,10 +32,17 @@ const Onboarding = () => {
           </View>
 
           <View className='mt-10 w-full items-center justify-center'>
-            <TouchableOpacity className="w-full p-4 bg-[#217C62] rounded-2xl items-center mb-4">
+            
+            <TouchableOpacity 
+            className="w-full p-4 bg-[#217C62] rounded-2xl items-center mb-4"
+            onPress={()=>router.push("(auth)/login")}
+            >
               <Text className="text-white text-lg">Login</Text>
             </TouchableOpacity>
-            <TouchableOpacity className="w-full p-4 bg-[#444242] rounded-2xl items-center">
+
+            <TouchableOpacity 
+            onPress={()=>router.push("(auth)/sign-up")}
+            className="w-full p-4 bg-[#444242] rounded-2xl items-center">
               <Text className="text-white text-lg">Registrieren</Text>
             </TouchableOpacity>
           </View>

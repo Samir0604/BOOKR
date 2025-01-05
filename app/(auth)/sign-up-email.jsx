@@ -1,18 +1,11 @@
 import { View, Text, SafeAreaView, Image, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard, ScrollView } from 'react-native'
-import React, { useState } from 'react'
-import Logo from "@/assets/logo/TemporaryBOOKRLogo.png"
-
-import Spotify from "@/assets/loginprovider/spotify.png"
-import Google from "@/assets/loginprovider/google.png"
+import { useState } from 'react'
+import React from 'react'
+import { router } from 'expo-router'
 import Apple from "@/assets/loginprovider/apple.png"
 import Facebook from "@/assets/loginprovider/facebook.png"
-import { router } from 'expo-router'
-
-const LoginPage = () => {
-
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-
+import Google from "@/assets/loginprovider/google.png"
+import Spotify from "@/assets/loginprovider/spotify.png"
 
 
 
@@ -26,21 +19,38 @@ const RoundedImage = ({image})=>{
     )
 }
 
+const LoginPage = () => {
+
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [fullName, setFullName] = useState("")
+    const [passwordConfirm, setPasswordConfirm] = useState("")
+
+
   return (
     <SafeAreaView className='bg-white flex-1'>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView 
-        contentContainerClassName='mt-24 flex-col bg-white items-center flex-1'
-        >
-            <Image source={Logo}/>
-            <Text className='text-2xl color-[#8C8C8C] font-semibold'>Jetzt bei BOOKR registrieren</Text>
+        
+        <ScrollView contentContainerClassName='mt-12 flex-col bg-white items-center flex-1'>
+            
+            <View className='mx-6'>
+                <Text className='font-bold mb-3' >Hallo und willkommen bei BOOKR</Text>
+                <Text>Wir bei Bookr helfen dir, dein perfektes Leseerlebnis zu schaffen. Von Abenteur, bis hinzu Romantik, begleiten wir dich </Text>
+            </View>
+            
+
+            <TextInput 
+            value = {fullName}
+            onChangeText={setFullName}
+            placeholder = "Vor- und Nachname" 
+            className="mt-12 w-5/6 rounded-xl border-[0.5px] font-medium border-[#8C8C8C] p-4 bg-white  "/>
+            
 
             <TextInput 
             value = {email}
             onChangeText={setEmail}
             placeholder = "E-Mail-Adresse" 
-            className="mt-12 w-5/6 rounded-xl border-[0.5px] font-medium border-[#8C8C8C] p-4 bg-white  "/>
-            
+            className="w-5/6 rounded-xl border-[0.5px] font-medium border-[#8C8C8C] p-4 bg-white mt-3"/>
 
             <TextInput 
             value = {password}
@@ -48,23 +58,28 @@ const RoundedImage = ({image})=>{
             placeholder = "Passwort" 
             className="w-5/6 rounded-xl border-[0.5px] font-medium border-[#8C8C8C] p-4 bg-white mt-3"/>
 
-            <View className="w-5/6 mt-2">
-                <Text className="text-left color-[#1975FF] font-semibold">Passwort vergessen?</Text>
-            </View>
+
+            <TextInput 
+            value = {passwordConfirm}
+            onChangeText={setPasswordConfirm}
+            placeholder = "Passwort bestätigen" 
+            className="w-5/6 rounded-xl border-[0.5px] font-medium border-[#8C8C8C] p-4 bg-white mt-3"/>
+
+
 
 
             <TouchableOpacity className='p-4 mt-7 bg-[#1975FF] rounded-2xl w-[70%]'>
-                <Text className='color-white text-center text-xl'>Login</Text>
+                <Text className='color-white text-center text-xl'>Registrieren</Text>
             </TouchableOpacity>
 
 
             <View className='mt-3'>
-                <Text>Noch keinen Account? <Text className='color-[#1975FF] font-semibold' onPress={()=>{
-                    router.push("(auth)/sign-up")
-                }}>Registrieren</Text></Text>
+                <Text>Du hast schon einen Account? <Text className='color-[#1975FF] font-semibold' onPress={()=>{
+                    router.push("(auth)/login")
+                }}>Login</Text></Text>
             </View>
 
-            <View className='mt-3'>
+             <View className='mt-3'>
                 <Text className='color-[#8C8C8C]'>oder</Text>
             </View>
 
@@ -75,8 +90,6 @@ const RoundedImage = ({image})=>{
                 <RoundedImage image={Apple}/>
             </View>
 
-            
-            
             
         </ScrollView>
         </TouchableWithoutFeedback>
