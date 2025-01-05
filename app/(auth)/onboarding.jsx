@@ -10,13 +10,13 @@ const Onboarding = () => {
 // top #217C62
 // bottom #3BE2B3
   return (
-    <View className="flex-1 relative items-center justify-center">
+    <View className="flex-1 items-center justify-center">
       
-      <View className="items-center flex-1 justify-center">
-      <LinearGradient colors={["#217C62","#3BE2B3"]} style={{height: '100%', width: screenWidth, display: "flex", justifyContent: 'center', alignItems: 'center' }}>
+      <View className="flex-1">
+      <LinearGradient colors={["#217C62","#3BE2B3"]} style={{height: '100%', width: screenWidth, display: "flex", alignItems: 'center' }}>
         <Image
           source={require('@/assets/logo/TemporaryBOOKRLogo.png')}
-          className="size-50"
+          className="size-50 mt-36"
         />
          </LinearGradient>
       </View>
