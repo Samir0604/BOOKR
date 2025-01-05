@@ -24,7 +24,7 @@ const LoginPage = () => {
             value = {password}
             onChangeText={setPassword}
             placeholder = "Passwort" 
-            className="w-5/6 rounded-xl border-[0.5px] font-medium border-[#8C8C8C] p-4 bg-white mt-3 "/>
+            className="w-5/6 rounded-xl border-[0.5px] font-medium border-[#8C8C8C] p-4 bg-white mt-3"/>
 
             <View className="w-5/6 mt-2">
                 <Text className="text-left color-[#1975FF] font-semibold">Passwort vergessen?</Text>
@@ -39,6 +39,17 @@ const LoginPage = () => {
             <View className='mt-3'>
                 <Text>Noch keinen Account? <Text className='color-[#1975FF] font-semibold'>Registrieren</Text></Text>
             </View>
+
+            <View className='mt-3'>
+                <Text className='color-[#8C8C8C]'>oder</Text>
+            </View>
+
+            <View className='flex-row mt-2'>
+                    <View className='w-14 h-14 bg-gray-200 rounded-full justify-center items-center'>
+                        <Image />
+                    </View>
+            </View>
+            
             
         </View>
     </SafeAreaView>
