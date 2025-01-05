@@ -1,6 +1,12 @@
-import { View, Text, SafeAreaView, Image, TextInput, TouchableOpacity } from 'react-native'
+import { View, Text, SafeAreaView, Image, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard } from 'react-native'
 import React, { useState } from 'react'
 import Logo from "@/assets/logo/TemporaryBOOKRLogo.png"
+
+import Spotify from "@/assets/loginprovider/spotify.png"
+import Google from "@/assets/loginprovider/google.png"
+import Apple from "@/assets/loginprovider/apple.png"
+import Facebook from "@/assets/loginprovider/facebook.png"
+import { router } from 'expo-router'
 
 const LoginPage = () => {
 
@@ -10,18 +16,19 @@ const LoginPage = () => {
 
 
 
-const RoundedImage = ()=>{
+const RoundedImage = ({image})=>{
     return(
         
-                    <View className='w-14 h-14 bg-gray-200 rounded-full justify-center items-center'>
-                        <Image />
-                    </View>
+    <View className='w-16 h-16 bg-white rounded-full justify-center items-center mr-2 border border-black'>
+        <Image source={image} style={{ width: '55%', height: '55%', borderRadius: 50 }}/>
+    </View>
             
     )
 }
 
   return (
     <SafeAreaView className='bg-white'>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View className='h-full flex-col items-center justify-center bg-white'>
             <Image source={Logo}/>
             <Text className='text-2xl color-[#8C8C8C] font-semibold'>Jetzt bei BOOKR anmelden</Text>
@@ -30,7 +37,7 @@ const RoundedImage = ()=>{
             value = {email}
             onChangeText={setEmail}
             placeholder = "E-Mail-Adresse" 
-            className="w-5/6 rounded-xl border-[0.5px] font-medium border-[#8C8C8C] p-4 bg-white mt-3 "/>
+            className="mt-12 w-5/6 rounded-xl border-[0.5px] font-medium border-[#8C8C8C] p-4 bg-white  "/>
             
 
             <TextInput 
@@ -50,7 +57,9 @@ const RoundedImage = ()=>{
 
 
             <View className='mt-3'>
-                <Text>Noch keinen Account? <Text className='color-[#1975FF] font-semibold'>Registrieren</Text></Text>
+                <Text>Noch keinen Account? <Text className='color-[#1975FF] font-semibold' onPress={()=>{
+                    router.push("(auth)/sign-up")
+                }}>Registrieren</Text></Text>
             </View>
 
             <View className='mt-3'>
@@ -58,16 +67,17 @@ const RoundedImage = ()=>{
             </View>
 
             <View className='flex-row mt-2'>
-                <RoundedImage />
-                <RoundedImage />
-                <RoundedImage />
-                <RoundedImage />
+                <RoundedImage image={Spotify}/>
+                <RoundedImage image={Facebook}/>
+                <RoundedImage image={Google}/>
+                <RoundedImage image={Apple}/>
             </View>
 
             
             
             
         </View>
+        </TouchableWithoutFeedback>
     </SafeAreaView>
     
   )
