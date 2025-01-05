@@ -25,7 +25,7 @@ const LoginPage = () => {
 
   return (
     <SafeAreaView className='bg-white flex-1'>
-      <ScrollView contentContainerClassName='flex-1 flex-col items-center mt-24 bg-white'>
+      <ScrollView contentContainerClassName='flex-1 flex-col items-center  bg-white'>
         <Image source={Logo} />
         <Text className='text-2xl color-[#8C8C8C] font-semibold'>Jetzt bei BOOKR registrieren</Text>
 
