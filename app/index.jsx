@@ -9,6 +9,7 @@ export default function HomeScreen() {
             <Link className="font-bold text-2xl" href="(auth)/onboarding">Onboarding</Link>
             <Link className="font-bold text-2xl" href="(auth)/login">Login</Link>
             <Link className="font-bold text-2xl" href="(auth)/sign-up">Sign-up</Link>
+            <Link className="font-bold text-2xl" href="(auth)/sign-up-email">Email</Link>
             </ScrollView>
  
 

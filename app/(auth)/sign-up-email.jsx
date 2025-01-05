@@ -33,7 +33,7 @@ const RoundedImage = ({image})=>{
         contentContainerClassName='mt-24 flex-col bg-white items-center flex-1'
         >
             <Image source={Logo}/>
-            <Text className='text-2xl color-[#8C8C8C] font-semibold'>Jetzt bei BOOKR anmelden</Text>
+            <Text className='text-2xl color-[#8C8C8C] font-semibold'>Jetzt bei BOOKR registrieren</Text>
 
             <TextInput 
             value = {email}
