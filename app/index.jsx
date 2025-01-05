@@ -15,6 +15,7 @@ export default function HomeScreen() {
             <Text className="text-5xl text-red-500 font-bold text-center">FURTHER ONBOARDING</Text>
 
             <Link className="font-bold text-2xl" href="questions/swiper">Swiper</Link>
+            <Link className="font-bold text-2xl" href="questions/categories">Cats</Link>
 
 
             </ScrollView>
