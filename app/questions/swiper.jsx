@@ -35,10 +35,10 @@ const SwiperPages = () => {
     >
       {swiperData.map(({ id, title, description, borderLeftStyle, borderRightStyle, buttonText, colorLeft, colorRight }) => (
         <View key={id} className={`flex-1 bg-white items-center justify-center overflow-hidden`}>
-          <View className={`h-[40%] w-[160%]`}  onLayout={(event) => {
-          const { width } = event.nativeEvent.layout;
-          setContainerWidth(width);
-        }}>
+          <View className={`h-[40%] w-[160%]`} onLayout={(event) => {
+            const { width } = event.nativeEvent.layout;
+            setContainerWidth(width);
+          }}>
 
 
             <LinearGradient colors={[colorLeft, colorRight]}
@@ -63,7 +63,7 @@ const SwiperPages = () => {
               className='rounded-full py-3 px-32 flex flex-row justify-center items-center shadow-md shadow-neutral-400/70 mt-20 mb-10 bg-[#2DA786]'
               onPress={() =>
                 isLastSlide
-                  ? router.replace("/categories")
+                  ? router.replace("/questions/categories")
                   : swiperRef.current?.scrollBy(1)
               }
             >
