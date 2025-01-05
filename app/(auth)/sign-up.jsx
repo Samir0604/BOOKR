@@ -1,26 +1,54 @@
-import { View, Text, SafeAreaView, Image, TextInput, TouchableOpacity } from 'react-native'
+import { View, Text, SafeAreaView, Image, TextInput, TouchableOpacity, ScrollView } from 'react-native'
 import React, { useState } from 'react'
+
 import Logo from "@/assets/logo/TemporaryBOOKRLogo.png"
+import Google from "@/assets/loginprovider/google.png"
+import Apple from "@/assets/loginprovider/apple.png"
+import Facebook from "@/assets/loginprovider/facebook.png"
+import Spotify from "@/assets/loginprovider/spotify.png"
+import Feather from '@expo/vector-icons/Feather';
+
+
+const Buttons = ({ name, provider, mail = false }) => (
+  <TouchableOpacity className='border rounded-3xl py-4  items-center flex-row'>
+    <View className='flex-row items-center ml-[21%]'>
+      {!mail ? <Image source={provider} className='size-9' /> : <Feather name="mail" size={28} color="black" className='ml-0.5 mr-0.5' />}
+      <Text className='font-bold text-xl ml-3'>Weiter mit {name}</Text>
+    </View>
+  </TouchableOpacity>
+)
+
+{/* <Feather name="mail" size={24} color="black" /> */ }
 
 const LoginPage = () => {
 
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
 
   return (
     <SafeAreaView className='bg-white'>
-        <View className='h-full flex-col items-center justify-center bg-white'>
-            <Image source={Logo}/>
-            <Text className='text-2xl color-[#8C8C8C] font-semibold'>Jetzt bei BOOKR registrieren</Text>
+      <ScrollView contentContainerClassName='h-full flex-col items-center justify-center bg-white'>
+        <Image source={Logo} />
+        <Text className='text-2xl color-[#8C8C8C] font-semibold'>Jetzt bei BOOKR registrieren</Text>
 
+        <View className='w-full px-8 gap-4 mt-12'>
 
-            <View>
-              <View></View>
-            </View>
-       
+          <Buttons name={"Google"} provider={Google} />
+
+          <Buttons name={"Apple"} provider={Apple} />
+
+          <Buttons name={"Facebook"} provider={Facebook} />
+
+          <Buttons name={"Spotify"} provider={Spotify} />
+
+          <Buttons name={"E-Mail"} provider={null} mail={true} />
+
         </View>
+        <View className='mt-3'>
+          <Text className='text-gray-500'>Du hast schon einen Account? <Text className='color-[#1975FF] font-semibold'>Login</Text></Text>
+        </View>
+
+      </ScrollView>
     </SafeAreaView>
-    
+
   )
 }
 
