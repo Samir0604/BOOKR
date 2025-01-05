@@ -7,6 +7,19 @@ const LoginPage = () => {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
 
+
+
+
+const RoundedImage = ()=>{
+    return(
+        
+                    <View className='w-14 h-14 bg-gray-200 rounded-full justify-center items-center'>
+                        <Image />
+                    </View>
+            
+    )
+}
+
   return (
     <SafeAreaView className='bg-white'>
         <View className='h-full flex-col items-center justify-center bg-white'>
@@ -45,10 +58,13 @@ const LoginPage = () => {
             </View>
 
             <View className='flex-row mt-2'>
-                    <View className='w-14 h-14 bg-gray-200 rounded-full justify-center items-center'>
-                        <Image />
-                    </View>
+                <RoundedImage />
+                <RoundedImage />
+                <RoundedImage />
+                <RoundedImage />
             </View>
+
+            
             
             
         </View>
