@@ -5,11 +5,11 @@
     "scheme": "myapp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/TemporaryBOOKRLogo.png",
+    "icon": "./assets/logo/TemporaryBOOKRLogo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/TemporaryBOOKRLogo.png",
+      "image": "./assets/logo/TemporaryBOOKRLogo.png",
       "resizeMode": "contain",
       "backgroundColor": "#1C9C79"
     },
@@ -18,15 +18,16 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/TemporaryBOOKRLogo.png",
+        "foregroundImage": "./assets/logo/TemporaryBOOKRLogo.png",
         "backgroundColor": "#1C9C79"
       }
     },
     "web": {
-      "favicon": "./assets/TemporaryBOOKRLogo.png"
+      "favicon": "./assets/logo/TemporaryBOOKRLogo.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-video"
     ]
   }
 }

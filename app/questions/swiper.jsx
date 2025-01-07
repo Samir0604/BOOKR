@@ -5,7 +5,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { useEvent } from 'expo';
+import { useVideoPlayer, VideoView } from 'expo-video';
+
+
+
 import { swiperData } from "@/constants/swiperData";
+
+
+
 
 const SwiperPages = () => {
   const swiperRef = useRef(null);
@@ -14,6 +22,9 @@ const SwiperPages = () => {
   const { width: screenWidth } = Dimensions.get('window');
   const isLastSlide = activeIndex === swiperData.length - 1;
   const [containerWidth, setContainerWidth] = useState(0);
+
+
+
 
 
   return (
@@ -33,10 +44,28 @@ const SwiperPages = () => {
       paginationStyle={{ top: -80, alignItems: 'center' }}
 
     >
-      {swiperData.map(({ id, title, description, borderLeftStyle, borderRightStyle, buttonText, colorLeft, colorRight }) => (
-        <View key={id} className={`flex-1 bg-white items-center justify-center overflow-hidden`}>
+      {swiperData.map(({ id, title, description, borderLeftStyle, borderRightStyle, buttonText, colorLeft, colorRight, videoURL, metaDataTitle, metaDataArtist }) => {
+        
+        const assetId = videoURL;
+
+
+        const VideoSource = {
+          assetId,
+          metadata: {
+            title: metaDataTitle,
+            artist: metaDataArtist,
+          },
+        };
+
+        const player = useVideoPlayer(VideoSource, player => {
+          player.loop = true;
+          player.play();
+        });
+
+        const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing });
+        return <View key={id} className={`flex-1 bg-white items-center justify-center overflow-hidden`}>
           <View className={`h-[40%] w-[160%]`} onLayout={(event) => {
-            const { width } = event.nativeEvent.layout;
+            const { width } = event.nativeEvent.layout; // Gets the width of the container
             setContainerWidth(width);
           }}>
 
@@ -63,25 +92,31 @@ const SwiperPages = () => {
               className='rounded-full py-3 px-32 flex flex-row justify-center items-center shadow-md shadow-neutral-400/70 mt-20 mb-10 bg-[#2DA786]'
               onPress={() =>
                 isLastSlide
-                  ? router.replace("/questions/categories")
+                  ? router.push("/questions/categories")
                   : swiperRef.current?.scrollBy(1)
               }
             >
               <Text className='text-lg text-white font-bold '>
                 {buttonText}
               </Text>
-
             </TouchableOpacity>
+
+            <View className="flex-1 justify-center items-center ">
+              <VideoView style={{ width: 350, height: 275, backgroundColor: 'transparent' }} player={player} allowsFullscreen allowsPictureInPicture nativeControls= {false}  />
+            </View>
+
           </View>
 
         </View>
 
-      ))}
+      })}
     </Swiper>
 
 
 
   );
 };
+
+
 
 export default SwiperPages;
