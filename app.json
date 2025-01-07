@@ -26,6 +26,8 @@
       "favicon": "./assets/logo/TemporaryBOOKRLogo.png"
     },
     "plugins": [
-      "expo-router"    ]
+      "expo-router",
+      "expo-video"
+    ]
   }
 }
