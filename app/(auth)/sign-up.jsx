@@ -8,14 +8,13 @@ import Facebook from "@/assets/loginprovider/facebook.png"
 import Spotify from "@/assets/loginprovider/spotify.png"
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router'
-import { loginWithGoogle } from '@/lib/auth'
+import { loginWithGoogle, loginWithSpotify } from '@/lib/auth'
 
 
 const Buttons = ({ name, provider, mail = false, handleProvider }) => {
 
   const handleLogin = async () => {
     const result = await handleProvider();
-
 
     if (!result) {
       Alert.alert("Error", "Failed to login");
@@ -55,7 +54,7 @@ const LoginPage = () => {
 
           <Buttons name={"Google"} provider={Google} handleProvider={loginWithGoogle} />
 
-          <Buttons name={"Apple"} provider={Apple} />
+          <Buttons name={"Apple"} provider={Apple} handleProvider={loginWithSpotify} />
 
           <Buttons name={"Facebook"} provider={Facebook} />
 
