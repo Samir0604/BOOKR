@@ -8,7 +8,10 @@ export const swiperData = [
     borderRightStyle: '100%',
     buttonText: 'Weiter',
     colorLeft: '#124134',
-    colorRight: '#32AC8B'
+    colorRight: '#1b644f',
+    videoURL: require('@/assets/videos/HangingChairReading.mp4'),
+    metaDataTitle: 'Woman On Hanging Chair',
+    metaDataArtist: 'TheImg on Envato'
   },
   {
     id: 2,
@@ -18,8 +21,11 @@ export const swiperData = [
     borderLeftStyle: '100%',
     borderRightStyle: '70%',
     buttonText: 'Weiter',
-    colorLeft: '#32AC8B',
-    colorRight: '#37B08F'
+    colorLeft: '#1b644f',
+    colorRight: '#268c6f',
+    videoURL: require('@/assets/videos/ManStudying.mp4'),
+    metaDataTitle: 'Man Studying',
+    metaDataArtist: 'MotionIDB on Envato'
   },
   {
     id: 3,
@@ -28,8 +34,11 @@ export const swiperData = [
       "„Lesen ist Träumen mit offenen Augen.“",
     borderLeftStyle: '70%',
     borderRightStyle: '100%',
-    buttonText: 'Anfangen',
-    colorLeft: '#3AB592',
-    colorRight: '#42BC98'
+    buttonText: 'Starten',
+    colorLeft: '#268c6f',
+    colorRight: '#31b48f',
+    videoURL: require('@/assets/videos/ManReading.mp4'),
+    metaDataTitle: 'Man Reading While Sitting On Books',
+    metaDataArtist: 'flashlinestudios on Envato'
   },
 ];
