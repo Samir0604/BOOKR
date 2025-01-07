@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, Image, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard, ScrollView } from 'react-native'
+import { View, Text, SafeAreaView, Image, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard, ScrollView, Alert } from 'react-native'
 import { useState } from 'react'
 import React from 'react'
 import { router } from 'expo-router'
@@ -26,6 +26,28 @@ const LoginPage = () => {
     const [fullName, setFullName] = useState("")
     const [passwordConfirm, setPasswordConfirm] = useState("")
 
+
+
+    const Register = async ()=>{
+        if(!email || !password || !fullName ||!passwordConfirm){
+            Alert.alert("please fill in all the information")
+            return;
+        }
+
+        if(password != passwordConfirm){
+            Alert.alert("passwords do not match ")
+            return
+        }
+
+
+        try{
+            const response = ""
+        }catch(error){
+            console.log(error)
+        }
+
+
+    }
 
   return (
     <SafeAreaView className='bg-white flex-1'>
