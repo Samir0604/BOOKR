@@ -1,5 +1,6 @@
+import { getCurrentUser } from "@/lib/auth";
 import { createContext, useContext } from "react";
-import { getCurrentUser } from "@/lib/appwrite";
+//import { getCurrentUser } from "@/lib/appwrite";
 import { useState, useEffect } from "react";
 
 const GlobalContext = createContext();
@@ -11,7 +12,7 @@ export const GlobalProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const res = await getCurrentUser();
+      const res = await getCurrentUser()
       if (res) {
         setIsLoggedIn(true);
         setUser(res);
