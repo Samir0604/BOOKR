@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, Image, TextInput, TouchableOpacity, ScrollView } from 'react-native'
+import { View, Text, SafeAreaView, Image, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native'
 import React, { useState } from 'react'
 
 import Logo from "@/assets/logo/TemporaryBOOKRLogo.png"
@@ -8,22 +8,37 @@ import Facebook from "@/assets/loginprovider/facebook.png"
 import Spotify from "@/assets/loginprovider/spotify.png"
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router'
+import { loginWithGoogle } from '@/lib/auth'
 
 
-const Buttons = ({ name, provider, mail = false }) => (
-  <TouchableOpacity 
-  onPress={()=>{
-    if(mail){
-      router.push("/sign-up-email")
+const Buttons = ({ name, provider, mail = false, onPress }) => {
+
+  const handleLogin = async () => {
+    const result = await onPress();
+    console.log(result);
+
+    if (!result) {
+      Alert.alert('no!')
     }
-  }}
-  className='border rounded-3xl py-4  items-center flex-row'>
-    <View className='flex-row items-center ml-[21%]'>
-      {!mail ? <Image source={provider} className='size-9' /> : <Feather name="mail" size={28} color="black" className='ml-0.5 mr-0.5' />}
-       <Text className='font-bold text-xl ml-3'>Weiter mit {name}</Text>
-    </View>
-  </TouchableOpacity>
-)
+  }
+
+  return (
+    <TouchableOpacity
+      onPress={() => {
+        if (mail) {
+          router.push("/sign-up-email")
+        } else {
+          handleLogin()
+        }
+      }}
+      className='border rounded-3xl py-4  items-center flex-row'>
+      <View className='flex-row items-center ml-[21%]'>
+        {!mail ? <Image source={provider} className='size-9' /> : <Feather name="mail" size={28} color="black" className='ml-0.5 mr-0.5' />}
+        <Text className='font-bold text-xl ml-3'>Weiter mit {name}</Text>
+      </View>
+    </TouchableOpacity>
+  )
+}
 
 {/* <Feather name="mail" size={24} color="black" /> */ }
 
@@ -38,7 +53,7 @@ const LoginPage = () => {
 
         <View className='w-full px-8 gap-4 mt-12'>
 
-          <Buttons name={"Google"} provider={Google} />
+          <Buttons name={"Google"} provider={Google} onPress={loginWithGoogle} />
 
           <Buttons name={"Apple"} provider={Apple} />
 
