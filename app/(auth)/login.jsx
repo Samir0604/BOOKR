@@ -25,7 +25,7 @@ const LoginPage = () => {
         try {
             const response = await signIn(email.trim(), password.trim())
             if (response) {
-                Alert.alert("good nigga")
+                Alert.alert("good")
             }
         } catch (error) {
             Alert.alert("Error", "Invalid Credentials")

@@ -13,8 +13,6 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { swiperData } from "@/constants/swiperData";
 
 
-
-
 const SwiperPages = () => {
   const swiperRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -23,13 +21,7 @@ const SwiperPages = () => {
   const isLastSlide = activeIndex === swiperData.length - 1;
   const [containerWidth, setContainerWidth] = useState(0);
 
-
-
-
-
   return (
-
-
 
     <Swiper
       ref={swiperRef}
@@ -45,10 +37,8 @@ const SwiperPages = () => {
 
     >
       {swiperData.map(({ id, title, description, borderLeftStyle, borderRightStyle, buttonText, colorLeft, colorRight, videoURL, metaDataTitle, metaDataArtist }) => {
-        
+
         const assetId = videoURL;
-
-
         const VideoSource = {
           assetId,
           metadata: {
@@ -63,6 +53,7 @@ const SwiperPages = () => {
         });
 
         const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing });
+
         return <View key={id} className={`flex-1 bg-white items-center justify-center overflow-hidden`}>
           <View className={`h-[40%] w-[160%]`} onLayout={(event) => {
             const { width } = event.nativeEvent.layout; // Gets the width of the container
@@ -102,7 +93,7 @@ const SwiperPages = () => {
             </TouchableOpacity>
 
             <View className="flex-1 justify-center items-center ">
-              <VideoView style={{ width: 350, height: 275, backgroundColor: 'transparent' }} player={player} allowsFullscreen allowsPictureInPicture nativeControls= {false}  />
+              <VideoView style={{ width: 350, height: 275, backgroundColor: 'transparent' }} player={player} allowsFullscreen allowsPictureInPicture nativeControls={false} />
             </View>
 
           </View>
@@ -111,8 +102,6 @@ const SwiperPages = () => {
 
       })}
     </Swiper>
-
-
 
   );
 };

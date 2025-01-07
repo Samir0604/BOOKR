@@ -30,7 +30,7 @@ const LoginPage = () => {
 
 
     const Register = async () => {
-        
+
         if (!email || !password || !fullName || !passwordConfirm) {
             Alert.alert("please fill in all the information")
             return;
@@ -45,9 +45,9 @@ const LoginPage = () => {
         try {
             const response = await signUpWithEmail(fullName.trim(), email.trim(), password.trim())
             if (response) {
-                Alert.alert("good nigga")
+                Alert.alert("good")
             } else {
-                Alert.alert("bad nigga")
+                Alert.alert("bad")
             }
         } catch (error) {
             console.log(error)

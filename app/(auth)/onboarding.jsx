@@ -21,8 +21,6 @@ const Onboarding = () => {
         />
          </LinearGradient>
       </View>
-     
-
 
       <View className="flex-1 w-[160%] bg-white items-center justify-center  px-12 rounded-tl-[100%] rounded-tr-[75%] -mt-20"> {/* die width ist so hoch damit der rounded effekt wirkt */}
         <View className='px-6' style={{ width: screenWidth }}> {/* hier mache ich die width zur screenwidth damit die sachen innerhalb des containers noch im screen bleiben */}
