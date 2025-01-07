@@ -2,9 +2,10 @@ import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'r
 import React, { useState } from 'react';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 
-import { databases } from '@/lib/appwrite';
+
 
 import { useGlobalContext } from '@/context/GlobalProvider';
+import { SubmitCategories } from '@/lib/updatedCategories';
 
 
 
@@ -34,27 +35,6 @@ export default function Categories() {
 
 
 
-  const SubmitCategories = async()=>{
-    if(selectedCategories.length == 0){
-      console.log("keine Kategorien")
-    }else if(!user){
-      console.log("user nicht gefunden")
-    }else{
-      const response = await databases.updateDocument(
-        config.databaseId,
-        config.usersCollectionId,
-        user.$id,
-        {
-          liked_categories : selectedCategories
-        }
-      )
-      if(response){
-        console.log("update successfully")
-      }else{
-        console.log("update went wrong")
-      }
-    }
-  }
 
 
 
@@ -127,7 +107,7 @@ export default function Categories() {
             <Text className="text-lg mr-2">{selectedCategories.length}/5 ausgewählt</Text>
             <TouchableOpacity 
             className="bg-black rounded-full p-2"
-            onPress={()=>SubmitCategories()}
+            onPress={()=>SubmitCategories(user, selectedCategories)}
             >
               <SimpleLineIcons name="arrow-right" size={20} color="white" />
             </TouchableOpacity>
