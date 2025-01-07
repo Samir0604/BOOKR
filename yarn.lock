@@ -3919,6 +3919,11 @@ expo-video@~2.0.3:
   resolved "https://registry.npmjs.org/expo-video/-/expo-video-2.0.3.tgz"
   integrity sha512-cBY6fBVj+jUXrKw7Xfn4/QwpXKMKPdv/4LCnFHy/SjR+suG4jIHMsCM2eZgqxXF1cbA8CII5LmK6LwmKB7DjMw==
 
+expo-web-browser@^14.0.1:
+  version "14.0.1"
+  resolved "https://registry.npmjs.org/expo-web-browser/-/expo-web-browser-14.0.1.tgz"
+  integrity sha512-QM9F3ie+UyIOoBvqFmT6CZojb1vMc2H+7ZlMT5dEu1PL2jtYyOeK2hLfbt/EMt7CBm/w+P29H9W9Y9gdebOkuQ==
+
 expo@*, expo@~52.0.6:
   version "52.0.6"
   resolved "https://registry.npmjs.org/expo/-/expo-52.0.6.tgz"

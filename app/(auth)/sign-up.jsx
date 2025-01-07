@@ -11,14 +11,14 @@ import { router } from 'expo-router'
 import { loginWithGoogle } from '@/lib/auth'
 
 
-const Buttons = ({ name, provider, mail = false, onPress }) => {
+const Buttons = ({ name, provider, mail = false, handleProvider }) => {
 
   const handleLogin = async () => {
-    const result = await onPress();
-    console.log(result);
+    const result = await handleProvider();
+
 
     if (!result) {
-      Alert.alert('no!')
+      Alert.alert("Error", "Failed to login");
     }
   }
 
@@ -53,7 +53,7 @@ const LoginPage = () => {
 
         <View className='w-full px-8 gap-4 mt-12'>
 
-          <Buttons name={"Google"} provider={Google} onPress={loginWithGoogle} />
+          <Buttons name={"Google"} provider={Google} handleProvider={loginWithGoogle} />
 
           <Buttons name={"Apple"} provider={Apple} />
 
