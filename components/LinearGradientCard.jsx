@@ -22,7 +22,7 @@ const LinearGradientCard = ({ headline, desc, btnText, ai = false, onPress }) =>
           flexDirection: 'column',
           padding: 18,
           gap: 30,
-          borderRadius: '5%',
+          borderRadius: 16,
         }}
       >
         <View className='flex-col gap-2'>
