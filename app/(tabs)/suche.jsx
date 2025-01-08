@@ -1,12 +1,17 @@
-import { View, Text } from 'react-native'
+import { View, Text, SafeAreaView } from 'react-native'
 import React from 'react'
+import BookProgress from '@/components/BookProgress'
 
-const suche = () => {
+const Suche = () => {
   return (
-    <View>
-      <Text>suche</Text>
-    </View>
+    <SafeAreaView>
+        <View>
+          <Text>suche</Text>
+          <BookProgress />
+        </View>
+    </SafeAreaView>
+    
   )
 }
 
-export default suche
+export default Suche
