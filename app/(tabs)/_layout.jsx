@@ -1,8 +1,12 @@
 import React from 'react';
-import { Redirect, Tabs } from 'expo-router';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { Tabs } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import Fontisto from '@expo/vector-icons/Fontisto';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import Entypo from '@expo/vector-icons/Entypo';
+
+
 
 export default function TabLayout() {
 
@@ -13,17 +17,18 @@ export default function TabLayout() {
           headerShown: false,
           tabBarActiveTintColor: "#2DA786",
           tabBarStyle: {
-            paddingVertical: 10, // fügt vertikales Padding hinzu
-            paddingHorizontal: 20, // fügt horizontales Padding hinzu
+            // fügt horizontales Padding hinzu
             backgroundColor: '#FFFFFF', // ändert die Hintergrundfarbe
             borderTopWidth: 0, // entfernt die obere Umrandung
             shadowOpacity: 0.1, // fügt Schatten hinzu (nur iOS),
-            paddingTop: 4
+            paddingTop: 10,
+            height: 90
           },
           tabBarLabelStyle: {
             fontSize: 12, // ändert die Schriftgröße des Labels
-            fontWeight: 'bold', // macht den Text fett
-          },
+            fontWeight: 'bold', // macht den Text fett,
+            marginTop: 2
+          }
         }}
       >
         <Tabs.Screen
@@ -31,7 +36,7 @@ export default function TabLayout() {
           options={{
             title: "Home",
             tabBarLabel: "Home",
-            tabBarIcon: ({ color }) => <AntDesign name="home" size={24} color={color} />,
+            tabBarIcon: ({ color }) => <Entypo name="home" size={30} color={color} />,
           }}
         />
         <Tabs.Screen
@@ -39,7 +44,7 @@ export default function TabLayout() {
           options={{
             title: "Bibliothek",
             tabBarLabel: "Bibliothek",
-            tabBarIcon: ({ color }) => <AntDesign name="home" size={24} color={color} />,
+            tabBarIcon: ({ color }) => <Ionicons name="library" size={26} color={color} />,
           }}
         />
 
@@ -48,7 +53,7 @@ export default function TabLayout() {
           options={{
             title: "Suche",
             tabBarLabel: "Suche",
-            tabBarIcon: ({ color }) => <AntDesign name="search1" size={24} color={color} />,
+            tabBarIcon: ({ color }) => <Fontisto name="search" size={26} color={color} />,
           }}
         />
 
@@ -57,7 +62,7 @@ export default function TabLayout() {
           options={{
             title: "Profil",
             tabBarLabel: "Profil",
-            tabBarIcon: ({ color }) => <MaterialCommunityIcons name="account" size={24} color={color} />,
+            tabBarIcon: ({ color }) => <Ionicons name="person-sharp" size={26} color={color} />,
           }}
         />
       </Tabs>
