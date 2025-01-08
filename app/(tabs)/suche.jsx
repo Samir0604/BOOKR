@@ -4,8 +4,8 @@ import BookProgress from '@/components/BookProgress'
 
 const Suche = () => {
   return (
-    <SafeAreaView>
-        <View>
+    <SafeAreaView className='bg-white'>
+        <View className='bg-white'>
           <Text>suche</Text>
           <BookProgress />
         </View>
