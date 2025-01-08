@@ -64,8 +64,8 @@ export default function Categories() {
   };
 
   return (
-    <SafeAreaView className="bg-white flex-1">
-      <ScrollView contentContainerClassName="mt-7 flex-col bg-white flex-1">
+    <ScrollView contentContainerClassName="mt-7 flex-col bg-white flex-1">
+      <SafeAreaView className="bg-white flex-1">
         <View className="border-b-2 px-7 pb-4 border-[#DFDFDF]">
           <View className="">
             <Text className="text-3xl color-[#1B6350]">Erzähl uns etwas über dich</Text>
@@ -112,9 +112,8 @@ export default function Categories() {
               <SimpleLineIcons name="arrow-right" size={20} color="white" />
             </TouchableOpacity>
           </View>
-
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </ScrollView>
   );
 }
