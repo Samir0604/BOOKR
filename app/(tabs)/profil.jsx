@@ -26,7 +26,7 @@ const profil = () => {
 
   return (
     <ScrollView className='flex-1 bg-white'>
-      <SafeAreaView className='p-5 flex-1'>
+      <SafeAreaView className='p-4 flex-1'>
 
         <View className='w-full items-center mb-8'>
           <Image source={Logo} className='size-60' />
