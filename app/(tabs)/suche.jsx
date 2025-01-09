@@ -10,7 +10,24 @@ const Suche = () => {
 
           <View className="mt-20">
             <Text>suche</Text>
-            <BookProgress />
+
+
+            <BookModal>
+           
+           <View>
+              <Text>Das hier ist mein modal</Text>
+
+              <Pressable onPress={()=>{}}>
+                <Text>Close</Text>
+              </Pressable>
+
+            </View>
+            
+           </BookModal>
+
+
+
+           
           </View>
           
        

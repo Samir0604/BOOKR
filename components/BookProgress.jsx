@@ -18,7 +18,7 @@ export default function BookProgress() {
       locations={[0.23, 0.77]}
       style={{
         borderRadius: 25,
-        marginTop: 10,
+        marginTop: 20,
       }}
     >
 
@@ -69,7 +69,7 @@ export default function BookProgress() {
 
             {/* Progress in & unter Halbkreis */}
             <View className='absolute top-0 bottom-0 flex flex-col items-center justify-center mt-10'>
-              <Text className='text-3xl font-bold'>{progress}%</Text>
+              <Text className='text-4xl font-bold'>{progress}%</Text>
               <Text className='text-2xl font-semibold'>geschafft</Text>
             </View>
           </View>
