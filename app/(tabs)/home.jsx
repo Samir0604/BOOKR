@@ -1,13 +1,26 @@
-import { View, Text } from 'react-native'
+import { View, Text, ScrollView, Pressable } from 'react-native'
 import React from 'react'
 import BookProgress from '@/components/BookProgress'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import Bitte from '@/components/Bitte';
+import ZurSammlung from '@/components/ZurSammlung';
+import Empfehlungen from '@/components/Empfehlungen';
+
+
 
 
 const home = () => {
+
+
+
+
+
+
   return (
+
+    <ScrollView className='bg-white flex-1'>
+
+    
     <SafeAreaView className='bg-white flex-1 p-4'>
     
               <View className="mt-5">
@@ -22,12 +35,15 @@ const home = () => {
               </View>
 
                 <BookProgress/>
-                <Bitte />
+                <ZurSammlung />
+                <Empfehlungen />
               </View>
               
            
+        
        
         </SafeAreaView>
+        </ScrollView>
   )
 }
 
