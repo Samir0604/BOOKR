@@ -31,7 +31,7 @@ const home = () => {
                 color="#2DA786"
               />
               </View>
-
+                <Text>Hallo</Text>
                 <BookProgress/>
                 <ZurSammlung />
                 <Empfehlungen />
