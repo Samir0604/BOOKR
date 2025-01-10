@@ -15,7 +15,7 @@ const home = () => {
 
   return (
 
-    <ScrollView className='bg-white flex-1'>
+    <ScrollView className='bg-white flex-1 px-4'>
       <SafeAreaView>
 
               <View className='flex flex-row items-center border-b border-[#8C8C8C] '>
@@ -26,7 +26,6 @@ const home = () => {
                 color="#2DA786"
               />
               </View>
-                <Text>Hallo</Text>
                 <BookProgress/>
                 <ZurSammlung />
                 <Empfehlungen />
