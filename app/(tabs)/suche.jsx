@@ -1,6 +1,5 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-import BookProgress from '@/components/BookProgress'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const Suche = () => {
@@ -10,24 +9,6 @@ const Suche = () => {
 
           <View className="mt-20">
             <Text>suche</Text>
-
-
-            <BookModal>
-           
-           <View>
-              <Text>Das hier ist mein modal</Text>
-
-              <Pressable onPress={()=>{}}>
-                <Text>Close</Text>
-              </Pressable>
-
-            </View>
-            
-           </BookModal>
-
-
-
-           
           </View>
           
        
