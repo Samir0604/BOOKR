@@ -1,14 +1,22 @@
-import { View, Text } from 'react-native'
+import { View, Text, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import BookProgress from '../../lib/bookProgress'
+import { useGlobalContext } from '@/context/GlobalProvider';
 
 const Suche = () => {
+
+    const { user } = useGlobalContext()
+
   return (
     <SafeAreaView className='bg-white flex-1 p-4'>
      
 
           <View className="mt-20">
             <Text>suche</Text>
+            <TouchableOpacity onPress={()=> BookProgress(user, "jsjjjjjj")}>
+              <Text>klick für progress</Text>
+            </TouchableOpacity>
           </View>
           
        
