@@ -26,9 +26,10 @@ const Bibliothek = () => {
     }).start(() => setModalVisible(false));
   };
 
-  function handleScroll() {
-
-  }
+  // Calculate the snap interval considering margin
+  const itemWidth = width * 0.92;
+  const itemMargin = width * 0.02; // 2% of the screen width for margin
+  const snapInterval = itemWidth + itemMargin;
 
   return (
     <SafeAreaView className="flex-1 justify-center items-center">
@@ -48,27 +49,34 @@ const Bibliothek = () => {
             right: 0,
             bottom: 0,
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
-
           }}
         >
           <FlatList
-            data={[1, 2, 3, 5, 6]}
+            data={[1, 2, 3, 4, 5, 6]}
             horizontal
-            contentContainerClassName='flex flex-row justify-around '
-            contentContainerStyle={{ width: width * 5 }}
+            contentContainerStyle={{ paddingHorizontal: width * 0.04 }} // Adjust initial padding
             showsHorizontalScrollIndicator={false}
             showsVerticalScrollIndicator={false}
-            pagingEnabled
+            pagingEnabled={true}
             bounces={false}
-            renderItem={(item) => {
+            snapToInterval={snapInterval} // Use dynamic snap interval with margin
+            decelerationRate="fast"
+            renderItem={({ item, index }) => {
               return (
-                <View className={`bg-white rounded-t-2xl mt-20 p-5 ${item.item == 1 ? '-mr-10' : 'ml-10'} `} style={{ width: width - width * 0.08 }}>
+                <View
+                  className={`bg-white rounded-t-2xl mt-20 p-5`}
+                  style={{
+                    width: itemWidth,
+                    marginLeft: index === 0 ? 0 : itemMargin / 2, // Adjust margin for first item
+                    marginRight: index === 5 ? 0 : itemMargin / 2, // Adjust margin for last item
+                  }}
+                >
                   <TouchableOpacity onPress={closeModal} style={{ alignSelf: 'flex-end' }}>
                     <Text className="text-gray-600 text-lg">X</Text>
                   </TouchableOpacity>
                   <ScrollView>
                     <Image
-                      source={require('@/assets/images/BuchBeispiel.png')} // Beispiel-URL für das Buchcover
+                      source={require('@/assets/images/BuchBeispiel.png')}
                       style={{ width: width * 0.6, height: width * 0.9, alignSelf: 'center' }}
                       resizeMode="contain"
                     />
@@ -89,11 +97,9 @@ const Bibliothek = () => {
                     </Text>
                   </ScrollView>
                 </View>
-
-              )
+              );
             }}
           />
-
         </Animated.View>
       )}
     </SafeAreaView>
