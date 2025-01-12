@@ -1,51 +1,18 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+
 
 import Modal from './modal';
 
 
-export default function Empfehlungen({ books, getBooks , openModal, loading}) {
+export default function Empfehlungen({ books , openModal, loading}) {
 
 
 
  
 
   return (
-    <LinearGradient
-      colors={["rgba(107, 180, 160, 0.33)", "rgba(255, 255, 255, 0.44)"]}
-      locations={[0.23, 0.77]}
-      style={{
-        borderRadius: 25,
-        marginTop: 32,
-      }}
-    >
-
-      {/* oberster Container */}
-      <View className='p-4'>
-
-        {/* Container für Überschrift und Text */}
-        <View className='flex-col gap-2'>
-
-          <View className='flex flex-row items-center'>
-            <Text className='text-3xl font-bold'>Empfehlungen für dich </Text>
-            <MaterialIcons
-              name="navigate-next"
-              size={38}
-              color="#2DA786"
-            />
-          </View>
-
-          <Text
-            className='color-[#8C8C8C] font-medium text-lg'
-            style={{ lineHeight: 22 }}
-          >Für dich zusammengestellt: Lass dich von unserer Auswahl inspirieren</Text>
-
-        </View>
-
-
-        {/* Bilder mit Titel rendern */}
+ 
         <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} className='mt-4' >
           {!loading ? books.map((book, index) => {
             let title = book.volumeInfo.title
@@ -88,8 +55,5 @@ export default function Empfehlungen({ books, getBooks , openModal, loading}) {
         </ScrollView>
        
 
-      </View>
-
-    </LinearGradient>
   );
 }
