@@ -10,11 +10,13 @@ import Feather from '@expo/vector-icons/Feather';
 import Empfehlungen from './Empfehlungen';
 
 import { useModal } from './useModal';
+///imports um active Books zu bearbeiten 
+import { useGlobalContext } from '@/context/GlobalProvider';
+import editActiveBooks from '@/lib/editActiveBooks'
 
 const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, first = false }) => {
 
-
-
+const { user } = useGlobalContext()
   /* Books */
 
 
@@ -138,7 +140,9 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                         <Text className="text-white font-bold text-lg">zur Leseliste</Text>
                         <Feather name="bookmark" size={24} color="white" />
                       </TouchableOpacity>
-                      <TouchableOpacity className="flex-row  gap-2 bg-[#2DA786] px-4 w-7/12 h-12 items-center justify-center rounded-full">
+                      <TouchableOpacity 
+                      onPress={()=>editActiveBooks(user, item.id)}
+                      className="flex-row  gap-2 bg-[#2DA786] px-4 w-7/12 h-12 items-center justify-center rounded-full">
                         <Text className="text-white font-bold text-lg">Lesen</Text>
                         <Feather name="book-open" size={24} color="white" />
                       </TouchableOpacity>
