@@ -1,34 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import axios from 'axios';
+
+import Modal from './modal';
+
+
+export default function Empfehlungen({ books, getBooks , openModal, loading}) {
 
 
 
-export default function Empfehlungen() {
-
-  const [books, setBooks] = useState([])
-  const [loading, setLoading] = useState(false)
-  async function getBooks() {
-    try {
-      setLoading(true)
-      const res = await axios.get('https://www.googleapis.com/books/v1/volumes?q=intitle:1984+inauthor:George+Orwell&key=AIzaSyCARWlbz3FVwnVoD81zrscOZ4gPZ85jr40&maxResults=5')
-      setBooks(res.data.items)
-      setLoading(false)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
-
-  }
-
-  useEffect(() => {
-    getBooks();
-  }, [])
-
-
+ 
 
   return (
     <LinearGradient
@@ -72,7 +54,7 @@ export default function Empfehlungen() {
 
             return (
               thumbnail != undefined && title != undefined && authors != undefined && (
-                <TouchableOpacity key={index} className='mr-3 flex-1'>
+                <TouchableOpacity key={index} onPress={() => {openModal(index)}}  className='mr-3 flex-1'>
                   <View className='w-44 h-72 drop-shadow-md mb-2 z-50' style={{
                     shadowColor: 'black',
                     shadowOffset: { width: 0, height: 6 },
@@ -101,9 +83,10 @@ export default function Empfehlungen() {
                   }
                 </TouchableOpacity>)
             )
-          }) : <ActivityIndicator size={'large'} color={'#2DA786'} style={{marginLeft: 165, marginTop: 10}} />}
+          }) : <ActivityIndicator size={'large'} color={'#2DA786'} style={{ marginLeft: 165, marginTop: 10 }} />}
 
         </ScrollView>
+       
 
       </View>
 
