@@ -7,8 +7,8 @@ import { useGlobalContext } from '@/context/GlobalProvider';
 import { Query } from 'react-native-appwrite';
 
 export default function BookProgress() {
-    //Fortschritt des Lesens im useState
-  const [progress, setProgress] = useState(22); 
+  //Fortschritt des Lesens im useState
+  const [progress, setProgress] = useState(22);
   const { user } = useGlobalContext();
 
   const radius = 90;  // Entspricht der Hälfte der Höhe des Halbkreises
@@ -16,21 +16,22 @@ export default function BookProgress() {
   const circumference = Math.PI * radius;  // Nur der obere Halbkreis
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
-///function um progress in db zu speichern
-const editProgress = async(bookId)=>{
+  ///function um progress in db zu speichern
+  const editProgress = async (bookId) => {
     console.log(config.activeBooksCollectionId)
-  try{
+    try {
 
 
-    const response = await databases.listDocuments(
-      config.databaseId,
-      config.activeBooksCollectionId,
+      const response = await databases.listDocuments(
+        config.databaseId,
+        config.activeBooksCollectionId,
         [Query.equal("bookId", bookId)]
-    );
-    
-      if(response.documents.length > 0){
+      );
+
+      if (response.documents.length > 0) {
         const documentId = response.documents[0].$id
-    
+
+
 
         const updatedResponse = await databases.updateDocument(
           config.databaseId,
@@ -40,29 +41,29 @@ const editProgress = async(bookId)=>{
             bookProgress: progress
           }
         );
-    
+
         console.log("document updated", updatedResponse)
-      }else{
+      } else {
         console.log("no document with this id found")
       }
 
 
 
-  }
-  catch(error){
+    }
+    catch (error) {
       console.log("error jude", error)
+    }
+
+
+
   }
-
-
-
-}
 
 
 
 
 
   return (
-    <LinearGradient 
+    <LinearGradient
       colors={["rgba(255, 255, 255, 0.44)", "rgba(107, 180, 160, 0.33)"]}
       locations={[0.23, 0.77]}
       style={{
@@ -71,11 +72,11 @@ const editProgress = async(bookId)=>{
       }}
     >
 
-        {/* oberster Container */}
+      {/* oberster Container */}
       <View className='flex flex-row p-3 items-center justify-between'>
 
-        <Image source={require("@/assets/images/BuchBeispiel.png")} className='w-44 h-72'/>
-        
+        <Image source={require("@/assets/images/BuchBeispiel.png")} className='w-44 h-72' />
+
 
         {/* Titel und Autor */}
         <View className='flex flex-col items-center w-auto'>
@@ -123,8 +124,8 @@ const editProgress = async(bookId)=>{
             </View>
           </View>
 
-            {/* Button zun anpassen */}
-          <TouchableOpacity 
+          {/* Button zun anpassen */}
+          <TouchableOpacity
             className='bg-black items-center justify-center p-3 rounded-full mt-10'
             onPress={() => editProgress("ImAGEAAAQBAJ")}
           >

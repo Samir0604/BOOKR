@@ -47,13 +47,13 @@ const home = () => {
 
   /* Modal */
 
-   const { 
-    modalVisible, 
-    bookIndex, 
-    slideAnim, 
-    scaleAnim, 
-    openModal, 
-    closeModal 
+  const {
+    modalVisible,
+    bookIndex,
+    slideAnim,
+    scaleAnim,
+    openModal,
+    closeModal
   } = useModal();
 
   return (
@@ -118,7 +118,7 @@ const home = () => {
         </SafeAreaView>
       </ScrollView >
       {/* Ausserhalb aller sachen da es sonst nicht mit dem padding der safeareaview klappt */}
-      {modalVisible ?  <Modal books={books} closeModal={closeModal} width={width} slideAnim={slideAnim} scaleAnim={scaleAnim} bookIndex={bookIndex} first={true} /> : null}
+      {modalVisible ? <Modal books={books} closeModal={closeModal} width={width} slideAnim={slideAnim} scaleAnim={scaleAnim} bookIndex={bookIndex} first={true} /> : null}
       {/* books um das jeweilige book am index der flatlist zu displayen, restlichen daten für css code, der bookindex für den  initialScrollIndex={bookIndex} damit die flatlist weiss zu welchem buch sie springen muss wenn ich eins anklicke  */}
     </>
   )
