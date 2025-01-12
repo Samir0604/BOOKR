@@ -18,13 +18,13 @@ export default function BookProgress() {
 
 ///function um progress in db zu speichern
 const editProgress = async(bookId)=>{
-    console.log(config.userBooksCollectionId)
+    console.log(config.activeBooksCollectionId)
   try{
 
 
     const response = await databases.listDocuments(
       config.databaseId,
-      config.userBooksCollectionId,
+      config.activeBooksCollectionId,
         [Query.equal("bookId", bookId)]
     );
     
@@ -32,12 +32,9 @@ const editProgress = async(bookId)=>{
         const documentId = response.documents[0].$id
     
 
-
-
-
         const updatedResponse = await databases.updateDocument(
           config.databaseId,
-          config.userBooksCollectionId,
+          config.activeBooksCollectionId,
           documentId,
           {
             bookProgress: progress

@@ -9,13 +9,13 @@ import axios from 'axios';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import ZurSammlung from '@/components/ZurSammlung';
 import Empfehlungen from '@/components/Empfehlungen';
-import likeBook from '@/lib/buchMerken';
+
 import { useGlobalContext } from '@/context/GlobalProvider';
 import Modal from '@/components/modal';
+import { useModal } from '@/components/useModal';
 
 
 
-const { height } = Dimensions.get('window');
 const { width } = Dimensions.get('window');
 
 const home = () => {
@@ -48,44 +48,14 @@ const home = () => {
 
   /* Modal */
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const slideAnim = useRef(new Animated.Value(height)).current; // Initial position off-screen
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const [bookIndex, setBookIndex] = useState(0); // damit ich den jeweilgen index des books bekomme damit die flatlist in modal weiss wohin sie scrollen muss
-
-  const openModal = (index) => {
-    setModalVisible(true);
-    setBookIndex(index) // hier passe ich den index aus der scrollview des empfehlungen components rein, damit ich den jetzigen index des angeklickten buches bekimme
-
-    Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const closeModal = () => {
-    Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: height,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start(() => setModalVisible(false));
-  };
-
+   const { 
+    modalVisible, 
+    bookIndex, 
+    slideAnim, 
+    scaleAnim, 
+    openModal, 
+    closeModal 
+  } = useModal();
 
   return (
     <>
@@ -115,8 +85,6 @@ const home = () => {
               }}
             >
 
-
-
               <View className='p-4'>
 
                 {/* Container für Überschrift und Text */}
@@ -134,7 +102,8 @@ const home = () => {
                   <Text
                     className='color-[#8C8C8C] font-medium text-lg'
                     style={{ lineHeight: 22 }}
-                  >Für dich zusammengestellt: Lass dich von unserer Auswahl inspirieren</Text>
+                  >Für dich zusammengestellt: Lass dich von unserer Auswahl inspirieren
+                  </Text>
 
                 </View>
 
@@ -150,7 +119,7 @@ const home = () => {
         </SafeAreaView>
       </ScrollView >
       {/* Ausserhalb aller sachen da es sonst nicht mit dem padding der safeareaview klappt */}
-      {modalVisible && <Modal books={books} closeModal={closeModal}  width={width}  slideAnim={slideAnim} scaleAnim={scaleAnim} bookIndex={bookIndex} first={true} />}
+      {modalVisible && <Modal books={books} closeModal={closeModal} width={width} slideAnim={slideAnim} scaleAnim={scaleAnim} bookIndex={bookIndex} first={true} />}
       {/* books um das jeweilige book am index der flatlist zu displayen, restlichen daten für css code, der bookindex für den  initialScrollIndex={bookIndex} damit die flatlist weiss zu welchem buch sie springen muss wenn ich eins anklicke  */}
     </>
   )

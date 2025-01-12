@@ -8,11 +8,8 @@ import Feather from '@expo/vector-icons/Feather';
 
 
 import Empfehlungen from './Empfehlungen';
-import { router } from 'expo-router';
 
-
-const { height: heightInModal } = Dimensions.get('window');
-const { width: widthInModal } = Dimensions.get('window');
+import { useModal } from './useModal';
 
 const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, first = false }) => {
 
@@ -44,44 +41,14 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
 
   /* Modal */
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const slideAnimInModal = useRef(new Animated.Value(heightInModal)).current; // Initial position off-screen
-  const scaleAnimInModal = useRef(new Animated.Value(0)).current;
-  const [bookIndexInModal, setBookIndexInModal] = useState(0); // damit ich den jeweilgen index des books bekomme damit die flatlist in modal weiss wohin sie scrollen muss
-
-  const openModalInModal = (index) => {
-    setModalVisible(true);
-    setBookIndexInModal(index) // hier passe ich den index aus der scrollview des empfehlungen components rein, damit ich den jetzigen index des angeklickten buches bekimme
-
-    Animated.parallel([
-      Animated.timing(slideAnimInModal, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnimInModal, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const closeModalInModal = () => {
-    Animated.parallel([
-      Animated.timing(slideAnimInModal, {
-        toValue: heightInModal,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnimInModal, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start(() => setModalVisible(false));
-  };
-
+  const { 
+    modalVisible: innerModalVisible,
+    bookIndex: innerBookIndex,
+    slideAnim: innerSlideAnim,
+    scaleAnim: innerScaleAnim,
+    openModal: openInnerModal,
+    closeModal: closeInnerModal
+  } = useModal();
 
 
 
@@ -186,7 +153,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                     <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">Ähnliche Bücher</Text>
                   </View>
                   <View className='px-2'>
-                    <Empfehlungen books={booksInModal} loading={loadingInModal} openModal={openModalInModal} />
+                    <Empfehlungen books={booksInModal} loading={loadingInModal} openModal={openInnerModal} />
                   </View>
                 </ScrollView>
 
@@ -197,7 +164,16 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           }}
         />
       </Animated.View>
-      {modalVisible && <Modal books={booksInModal} closeModal={closeModalInModal} loading={loadingInModal} width={widthInModal} slideAnim={slideAnimInModal} scaleAnim={scaleAnimInModal} bookIndex={bookIndexInModal} />}
+      {innerModalVisible && (
+        <Modal 
+          books={booksInModal}
+          closeModal={closeInnerModal}
+          width={width}
+          slideAnim={innerSlideAnim}
+          scaleAnim={innerScaleAnim}
+          bookIndex={innerBookIndex}
+        />
+      )}
 
     </>
   )
