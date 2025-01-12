@@ -152,7 +152,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
 
                     <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">Ähnliche Bücher</Text>
                   </View>
-                  <View className='px-2'>
+                  <View className='px-2 mt-3'>
                     <Empfehlungen books={booksInModal} loading={loadingInModal} openModal={openInnerModal} />
                   </View>
                 </ScrollView>
@@ -164,7 +164,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           }}
         />
       </Animated.View>
-      {innerModalVisible && (
+      {innerModalVisible ? (
         <Modal 
           books={booksInModal}
           closeModal={closeInnerModal}
@@ -173,7 +173,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           scaleAnim={innerScaleAnim}
           bookIndex={innerBookIndex}
         />
-      )}
+      ) : null}
 
     </>
   )

@@ -11,7 +11,7 @@ export default function Empfehlungen({ books, openModal, loading }) {
         const authors = book.volumeInfo.authors;
 
         return (
-          thumbnail && title && authors && (
+          (thumbnail && title && authors) ? (
             <TouchableOpacity 
               key={index} 
               onPress={() => openModal(index)} 
@@ -39,7 +39,7 @@ export default function Empfehlungen({ books, openModal, loading }) {
                 <Text key={idx} className="color-[#8C8C8C]">{author}</Text>
               ))}
             </TouchableOpacity>
-          )
+          ) : null
         );
       }) : (
         <ActivityIndicator 
