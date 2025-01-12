@@ -48,26 +48,41 @@ const home = () => {
   /* Modal */
 
   const [modalVisible, setModalVisible] = useState(false);
-  const slideAnim = useRef(new Animated.Value(height)).current;
+  const slideAnim = useRef(new Animated.Value(height)).current; // Initial position off-screen
+  const scaleAnim = useRef(new Animated.Value(0)).current; 
   const [bookIndex, setBookIndex] = useState(0); // damit ich den jeweilgen index des books bekomme damit die flatlist in modal weiss wohin sie scrollen muss
 
   const openModal = (index) => {
     setModalVisible(true);
     setBookIndex(index) // hier passe ich den index aus der scrollview des empfehlungen components rein, damit ich den jetzigen index des angeklickten buches bekimme
     
-    Animated.timing(slideAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   const closeModal = () => {
-    Animated.timing(slideAnim, {
-      toValue: height,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => setModalVisible(false));
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: height,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setModalVisible(false));
   };
 
 
@@ -75,7 +90,7 @@ const home = () => {
     <>
       <ScrollView className='bg-white flex-1'>
         <SafeAreaView className='bg-white flex-1 p-4'>
-          <View className="mt-5">
+          <View className="mt-12">
 
             <View className='flex flex-row items-center border-b border-[#8C8C8C] '>
               <Text className='text-4xl font-semibold'>Aktive Bücher</Text>
@@ -95,7 +110,7 @@ const home = () => {
         </SafeAreaView>
       </ScrollView>
       {/* Ausserhalb aller sachen da es sonst nicht mit dem padding der safeareaview klappt */}
-      {modalVisible && <Modal books={books} closeModal={closeModal} width={width} slideAnim={slideAnim}  bookIndex={bookIndex} />} 
+      {modalVisible && <Modal books={books} closeModal={closeModal} width={width} slideAnim={slideAnim} scaleAnim={scaleAnim}  bookIndex={bookIndex} />} 
       {/* books um das jeweilige book am index der flatlist zu displayen, restlichen daten für css code, der bookindex für den  initialScrollIndex={bookIndex} damit die flatlist weiss zu welchem buch sie springen muss wenn ich eins anklicke  */}
     </>
   )
