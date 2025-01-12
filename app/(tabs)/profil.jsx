@@ -6,13 +6,51 @@ import Logo from '@/assets/logo/TemporaryBOOKRLogo.png'
 import { useGlobalContext } from '@/context/GlobalProvider'
 import { useRootNavigationState } from 'expo-router'
 
+import { MaterialIcons, Ionicons } from '@expo/vector-icons'
 
-const SettingsButton = ({ setting, onPress }) => (
-  <View className={`px-1 py-3.5 ${setting == 'Ausloggen' ? '' : 'border-b border-b-[#8C8C8C]'} `}>
-    <TouchableOpacity>
-      <Text className={`text-xl ${setting == 'Ausloggen' ? 'text-red-500' : 'text-black'} font-semibold`}>{setting}</Text>
-    </TouchableOpacity>
-  </View>
+
+
+
+
+// const ProfileStats = ({ number, label }) => (
+//   <View className="items-center">
+//     <Text className="text-2xl font-bold text-[#2DA786]">{number}</Text>
+//     <Text className="text-gray-600 text-sm">{label}</Text>
+//   </View>
+// )
+
+
+// <ProfileStats number="12" label="Gelesene Bücher" />
+// <View className="h-12 w-[1px] bg-gray-200" />
+// <ProfileStats number="3" label="Aktuelle Bücher" />
+// <View className="h-12 w-[1px] bg-gray-200" />
+// <ProfileStats number="158" label="Lesestunden" />
+
+
+const SettingsButton = ({ setting, icon, onPress }) => (
+  <TouchableOpacity 
+    className={`flex-row items-center justify-between px-4 py-6 ${setting == 'Ausloggen' ? 'rounded-b-2xl' : 'border-b border-b-[#e5e5e5]'} ${setting == 'Konto' ? 'rounded-t-2xl' : ''}`}
+    style={{
+      backgroundColor: setting == 'Ausloggen' ? '#FFF5F5' : 'white',
+      
+    }}
+  >
+    <View className="flex-row items-center gap-3">
+      <Ionicons 
+        name={icon} 
+        size={22} 
+        color={setting == 'Ausloggen' ? '#EF4444' : '#2DA786'} 
+      />
+      <Text className={`text-lg ${setting == 'Ausloggen' ? 'text-red-500' : 'text-gray-700'} font-medium`}>
+        {setting}
+      </Text>
+    </View>
+    <MaterialIcons 
+      name="chevron-right" 
+      size={24} 
+      color={setting == 'Ausloggen' ? '#EF4444' : '#2DA786'} 
+    />
+  </TouchableOpacity>
 )
 
 
@@ -20,13 +58,12 @@ const profil = () => {
 
   const { user } = useGlobalContext()
 
-  console.log(useRootNavigationState);
 
 
 
   return (
     <ScrollView className='flex-1 bg-white'>
-      <SafeAreaView className='p-4 flex-1'>
+      <SafeAreaView className='p-5 flex-1 bg-white'>
 
         <View className='w-full items-center mb-8'>
           <Image source={Logo} className='size-60' />
@@ -36,25 +73,34 @@ const profil = () => {
 
         <LinearGradientCard headline="Deine Sammlung" desc='Lese Bücher und erhalte Belohnungen' btnText='zur Sammlung' />
 
-        <View className='mt-8 bg-white p-4'>
-          <Text className='text-black text-3xl font-bold'>Einstellungen</Text>
+     {/* Settings Section */}
+     <View className='mt-8 bg-white '>
+    <Text className='text-gray-800 text-2xl font-bold mb-4'>Einstellungen</Text>
+    <View className='bg-white rounded-2xl'
+      style={{
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+      }}
+    >
+      <SettingsButton setting='Konto' icon="person-outline" />
+      <SettingsButton setting='Abonnement' icon="star-outline" />
+      <SettingsButton setting='Benachrichtigungen' icon="notifications-outline" />
+      <SettingsButton setting='Sprache' icon="language" />
+      <SettingsButton setting='FAQ' icon="help-circle-outline" />
+      <SettingsButton setting='Geschäftsbedingungen' icon="document-text-outline" />
+      <SettingsButton setting='Datenschutz' icon="shield-outline" />
+      <SettingsButton setting='Ausloggen' icon="log-out-outline" />
+    </View>
+  </View>
 
-          <View className='mt-5 '>
-            <SettingsButton setting='Konto' />
-            <SettingsButton setting='Abonnement' />
-            <SettingsButton setting='Benachrichtigungen' />
-            <SettingsButton setting='Sprache' />
-            <SettingsButton setting='FAQ' />
-            <SettingsButton setting='Geschäftsbedingungen' />
-            <SettingsButton setting='Datenschutz' />
-            <SettingsButton setting='Ausloggen' />
-          </View>
-
-        </View>
-
-      </SafeAreaView>
-    </ScrollView>
-  )
+  <View className="h-8" /> {/* Bottom Spacing */}
+</SafeAreaView>
+</ScrollView>
+)
 }
+
 
 export default profil

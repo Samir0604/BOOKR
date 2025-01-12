@@ -9,7 +9,6 @@ import axios from 'axios';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import ZurSammlung from '@/components/ZurSammlung';
 import Empfehlungen from '@/components/Empfehlungen';
-
 import { useGlobalContext } from '@/context/GlobalProvider';
 import Modal from '@/components/modal';
 import { useModal } from '@/components/useModal';
@@ -60,14 +59,14 @@ const home = () => {
   return (
     <>
       <ScrollView className='bg-white flex-1'>
-        <SafeAreaView className='bg-white flex-1 p-4'>
+        <SafeAreaView className='bg-white flex-1 p-5'>
           <View className="mt-12">
 
             <View className='flex flex-row items-center border-b border-[#8C8C8C] '>
-              <Text className='text-4xl font-semibold'>Aktive Bücher</Text>
+              <Text className='text-4xl font-bold'>Aktive Bücher</Text>
               <MaterialIcons
                 name="navigate-next"
-                size={38}
+                size={34}
                 color="#2DA786"
               />
             </View>

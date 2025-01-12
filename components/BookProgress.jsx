@@ -34,7 +34,7 @@ const editProgress = async(bookId)=>{
 
         const updatedResponse = await databases.updateDocument(
           config.databaseId,
-          config.activeBooksCollectionId,
+          config.userBooksCollectionId,
           documentId,
           {
             bookProgress: progress
