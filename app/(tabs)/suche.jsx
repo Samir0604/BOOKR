@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import BookProgress from '../../lib/bookProgress'
+import editActiveBooks from '../../lib/editActiveBooks'
 import { useGlobalContext } from '@/context/GlobalProvider';
 
 const Suche = () => {
@@ -14,7 +14,7 @@ const Suche = () => {
 
           <View className="mt-20">
             <Text>suche</Text>
-            <TouchableOpacity onPress={()=> BookProgress(user, "jsjjjjjj")}>
+            <TouchableOpacity onPress={()=> editActiveBooks(user, "jsjjjj")}>
               <Text>klick für progress</Text>
             </TouchableOpacity>
           </View>
