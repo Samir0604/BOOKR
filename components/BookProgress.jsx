@@ -21,11 +21,11 @@ export default function BookProgress() {
   async function fetchData() {
     try {
       // Erst activeBooks laden
-      const activeBooks = await getActiveBooks(user);
-      if(activeBooks) {
-        setActiveBook(activeBooks);
+      const activeBook = await getActiveBooks(user);
+      if(activeBook) {
+        setActiveBook(activeBook);
         // Dann erst den Progress laden
-        const savedProgress = await getBookProgress(user, activeBooks.googleBooksId);
+        const savedProgress = await getBookProgress(user, activeBook.$id);
         if (savedProgress !== undefined) {
           setProgress(savedProgress);
         }
