@@ -114,31 +114,31 @@ const bibliothek = () => {
               >
                 <GenreButton
                   title="Krimi"
-                  icon={<MaterialIcons name="search" size={24} color="#000000" />}
+                  icon={<Text className="text-2xl">🕵🏼‍♂️</Text>}
                 />
                 <GenreButton
                   title="Persönlichkeitsentwicklung"
-                  icon={<FontAwesome5 name="seedling" size={20} color="#77DD77" />}
+                  icon={<Text className="text-2xl">🦹🏽</Text>}
                 />
                 <GenreButton
                   title="Liebesromane"
-                  icon={<FontAwesome5 name="heart" size={20} color="#FF6B6B" />}
+                  icon={<Text className="text-2xl">🌹</Text>}
                 />
                 <GenreButton
                   title="Spiritualität"
-                  icon={<FontAwesome5 name="dove" size={20} color="#A8A8A8" />}
+                  icon={<Text className="text-2xl">🧘🏼</Text>}
                 />
                 <GenreButton
                   title="Poesie"
-                  icon={<Feather name="edit-3" size={22} color="#000000" />}
+                  icon={<Text className="text-2xl">🖋️</Text>}
                 />
                 <GenreButton
                   title="Fantasy"
-                  icon={<FontAwesome5 name="dragon" size={20} color="#90EE90" />}
+                  icon={<Text className="text-2xl">🐉</Text>}
                 />
                 <GenreButton
                   title="Geschichte"
-                  icon={<FontAwesome5 name="book" size={20} color="#4A9C5E" />}
+                  icon={<Text className="text-2xl">📚</Text>}
                 />
                 <TouchableOpacity
                   className="flex-row items-center justify-between py-4"
