@@ -4,6 +4,7 @@ import BookProgress from '@/components/BookProgress'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient';
 
+
 import axios from 'axios';
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -18,6 +19,8 @@ import { useModal } from '@/components/useModal';
 const { width } = Dimensions.get('window');
 
 const home = () => {
+  
+
   const { user } = useGlobalContext()
 
 

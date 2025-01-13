@@ -22,19 +22,34 @@ const { user } = useGlobalContext()
 
   const [booksInModal, setBooksInModal] = useState([])
   const [loadingInModal, setLoadingInModal] = useState(false)
+  
   async function getBooks() {
     try {
-      setLoadingInModal(true)
-      const res = await axios.get('https://www.googleapis.com/books/v1/volumes?q=seo&key=AIzaSyCARWlbz3FVwnVoD81zrscOZ4gPZ85jr40&maxResults=5')
-      setBooksInModal(res.data.items)
-      setLoadingInModal(false)
+      setLoadingInModal(true);
+      
+      const requests = [
+        'https://www.googleapis.com/books/v1/volumes?q=Brave+New+World+Aldous+Huxley&langRestrict=de&maxResults=1',
+        'https://www.googleapis.com/books/v1/volumes?q=Fahrenheit+451+Ray+Bradbury&langRestrict=de&maxResults=1', 
+        'https://www.googleapis.com/books/v1/volumes?q=Wir+Jewgeni+Samjatin&langRestrict=de&maxResults=1',
+        'https://www.googleapis.com/books/v1/volumes?q=The+Handmaid%27s+Tale+Margaret+Atwood&langRestrict=de&maxResults=1',
+        'https://www.googleapis.com/books/v1/volumes?q=The+Trial+Franz+Kafka&langRestrict=de&maxResults=1'
+      ];
+  
+      const responses = await Promise.all(
+        requests.map(url => axios.get(url))
+      );
+  
+      // Extrahiere die items aus allen Responses und füge sie in ein Array
+      const allBooks = responses.flatMap(response => response.data.items);
+      
+      setBooksInModal(allBooks);
     } catch (error) {
-      console.error(error)
+      console.error(error);
     } finally {
-      setLoadingInModal(false)
+      setLoadingInModal(false);
     }
-
   }
+  
 
   useEffect(() => {
     getBooks();
