@@ -1,22 +1,63 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
-import { config, databases } from '../lib/appwrite';
 import { useGlobalContext } from '@/context/GlobalProvider';
-import { Query } from 'react-native-appwrite';
+import { getBookProgress } from '../lib/getBookProgress';
+import { editBookProgress } from '../lib/editBookProgress';
+import getActiveBooks from '../lib/getActiveBooks';
 
 export default function BookProgress() {
-    //Fortschritt des Lesens im useState
-  const [progress, setProgress] = useState(22); 
+  const [progress, setProgress] = useState(0); 
+  const [activeBook, setActiveBook] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useGlobalContext();
 
-  const radius = 85;  // Entspricht der Hälfte der Höhe des Halbkreises
+  const radius = 85;
   const strokeWidth = 6;
-  const circumference = Math.PI * radius;  // Nur der obere Halbkreis
+  const circumference = Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
+  async function fetchData() {
+    try {
+      // Erst activeBooks laden
+      const activeBooks = await getActiveBooks(user);
+      if(activeBooks) {
+        setActiveBook(activeBooks);
+        // Dann erst den Progress laden
+        const savedProgress = await getBookProgress(user, activeBooks.googleBooksId);
+        if (savedProgress !== undefined) {
+          setProgress(savedProgress);
+        }
+      } else {
+        console.log("keine Bücher zurück");
+      }
+    } catch(error) {
+      console.log("Fehler beim Laden der Daten:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
+  useEffect(() => {
+    fetchData();
+  }, [user]);
+
+  if (isLoading) {
+    return (
+      <View>
+        <Text>Laden...</Text>
+      </View>
+    );
+  }
+
+  if (!activeBook) {
+    return (
+      <View>
+        <Text>Kein aktives Buch gefunden</Text>
+      </View>
+    );
+  }
 
   return (
     <LinearGradient 
@@ -27,22 +68,15 @@ export default function BookProgress() {
         marginTop: 20,
       }}
     >
-
-        {/* oberster Container */}
       <View className='flex flex-row p-3 items-center justify-between'>
-
-        <Image source={require("@/assets/images/BuchBeispiel.png")} className='w-44 h-72'/>
+        <Image source={{uri: activeBook.image}} className='w-44 h-72'/>
         
-
-        {/* Titel und Autor */}
         <View className='flex flex-col items-center w-auto'>
           <View className='flex flex-col justify-center gap-0'>
-            <Text className='text-3xl font-bold'>Lichtenstein</Text>
-            <Text className='text-2xl font-bold text-gray-500'>Simon Karper</Text>
+            <Text className='text-3xl font-bold'>{activeBook.title}</Text>
+            <Text className='text-2xl font-bold text-gray-500'>{activeBook.authors}</Text>
           </View>
 
-
-          {/* Fortschrittsanzeige im Halbkreis */}
           <View className="mt-2.5 flex items-center justify-center">
             <Svg width={radius * 2 + strokeWidth} height={radius + strokeWidth}>
               <Circle
@@ -72,24 +106,21 @@ export default function BookProgress() {
               )}
             </Svg>
 
-
-            {/* Progress in & unter Halbkreis */}
             <View className='absolute top-0 bottom-0 flex flex-col items-center justify-center mt-10'>
               <Text className='text-4xl font-bold'>{progress}%</Text>
-              <Text className='text-2xl font-semibold'>geschafft</Text>
+              <Text className='text-2xl font-semibold'>Fortschritt</Text>
             </View>
           </View>
 
-            {/* Button zun anpassen */}
           <TouchableOpacity 
             className='bg-black items-center justify-center p-3 rounded-full mt-10 mx-2'
-            onPress={() => editProgress("ImAGEAAAQBAJ")}
+            onPress={async () => {
+              await editBookProgress(user, activeBook.googleBooksId, 49);
+              fetchData(); // Daten nach Update neu laden
+            }}
           >
             <Text className='text-white font-bold text-lg'>Fortschritt anpassen</Text>
           </TouchableOpacity>
-
-
-
         </View>
       </View>
     </LinearGradient>
