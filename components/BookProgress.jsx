@@ -11,56 +11,10 @@ export default function BookProgress() {
   const [progress, setProgress] = useState(22); 
   const { user } = useGlobalContext();
 
-  const radius = 90;  // Entspricht der Hälfte der Höhe des Halbkreises
+  const radius = 85;  // Entspricht der Hälfte der Höhe des Halbkreises
   const strokeWidth = 6;
   const circumference = Math.PI * radius;  // Nur der obere Halbkreis
   const strokeDashoffset = circumference - (progress / 100) * circumference;
-
-///function um progress in db zu speichern
-const editProgress = async(bookId)=>{
-    console.log(config.userBooksCollectionId)
-  try{
-
-
-    const response = await databases.listDocuments(
-      config.databaseId,
-      config.userBooksCollectionId,
-        [Query.equal("bookId", bookId)]
-    );
-    
-      if(response.documents.length > 0){
-        const documentId = response.documents[0].$id
-    
-
-
-
-
-        const updatedResponse = await databases.updateDocument(
-          config.databaseId,
-          config.userBooksCollectionId,
-          documentId,
-          {
-            bookProgress: progress
-          }
-        );
-    
-        console.log("document updated", updatedResponse)
-      }else{
-        console.log("no document with this id found")
-      }
-
-
-
-  }
-  catch(error){
-      console.log("error jude", error)
-  }
-
-
-
-}
-
-
 
 
 
@@ -128,7 +82,7 @@ const editProgress = async(bookId)=>{
 
             {/* Button zun anpassen */}
           <TouchableOpacity 
-            className='bg-black items-center justify-center p-3 rounded-full mt-10'
+            className='bg-black items-center justify-center p-3 rounded-full mt-10 mx-2'
             onPress={() => editProgress("ImAGEAAAQBAJ")}
           >
             <Text className='text-white font-bold text-lg'>Fortschritt anpassen</Text>
