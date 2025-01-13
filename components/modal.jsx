@@ -1,64 +1,108 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Animated, Image, FlatList, ScrollView, Dimensions } from 'react-native';
-
 import axios from 'axios';
-
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
-
-
 import Empfehlungen from './Empfehlungen';
-
 import { useModal } from './useModal';
-///imports um active Books zu bearbeiten 
+///imports um active Books zu bearbeiten
 import { useGlobalContext } from '@/context/GlobalProvider';
 import editActiveBooks from '@/lib/editActiveBooks'
 
 const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, first = false }) => {
-
-const { user } = useGlobalContext()
+  const { user } = useGlobalContext()
   /* Books */
-
-
   const [booksInModal, setBooksInModal] = useState([])
   const [loadingInModal, setLoadingInModal] = useState(false)
-  
   async function getBooks() {
     try {
       setLoadingInModal(true);
-      
-      const requests = [
-        'https://www.googleapis.com/books/v1/volumes?q=Brave+New+World+Aldous+Huxley&langRestrict=de&maxResults=1',
-        'https://www.googleapis.com/books/v1/volumes?q=Fahrenheit+451+Ray+Bradbury&langRestrict=de&maxResults=1', 
-        'https://www.googleapis.com/books/v1/volumes?q=Wir+Jewgeni+Samjatin&langRestrict=de&maxResults=1',
-        'https://www.googleapis.com/books/v1/volumes?q=The+Handmaid%27s+Tale+Margaret+Atwood&langRestrict=de&maxResults=1',
-        'https://www.googleapis.com/books/v1/volumes?q=The+Trial+Franz+Kafka&langRestrict=de&maxResults=1'
-      ];
-  
-      const responses = await Promise.all(
-        requests.map(url => axios.get(url))
+      let books = [];
+      let startIndex = 0;
+      const maxResults = 5;
+      const minAverageRating = 4.0;
+      function filterBooks(books) {
+        return books.filter((book) => {
+          return (
+            book.volumeInfo.title &&
+            book.volumeInfo.description &&
+            book.volumeInfo.authors &&
+            book.volumeInfo.authors.length > 0 &&
+            book.volumeInfo.imageLinks &&
+            book.volumeInfo.pageCount // &&
+            // book.volumeInfo.averageRating !== undefined &&
+            // book.volumeInfo.averageRating >= minAverageRating
+          );
+        });
+      }
+      function isDuplicate(newBook, existingBooks) {
+        return existingBooks.some(book => book.id === newBook.id);
+      }
+      const res = await axios.get(
+        `https://www.googleapis.com/books/v1/volumes?q=subject:Dystopian`
       );
+      const newBooks = filterBooks(res.data.items);
+      const uniqueNewBooks = newBooks.filter(newBook => !isDuplicate(newBook, books));
+      books = [...books, ...uniqueNewBooks];
+
+      // startIndex += maxResults;
+      // if (books.length < 5) {
+      //   startIndex = 0;
+      //   while (books.length < 5) {
+      //     const res = await axios.get(
+      //       `https://www.googleapis.com/books/v1/volumes?q=subject:"Dystopian"&maxResults=${maxResults}&startIndex=${startIndex}`
+      //     );
+      //     const allNewBooks = res.data.items.filter((book) => {
+      //       return (
+      //         book.volumeInfo.title &&
+      //         book.volumeInfo.description &&
+      //         book.volumeInfo.authors &&
+      //         book.volumeInfo.authors.length > 0 &&
+      //         book.volumeInfo.imageLinks &&
+      //         book.volumeInfo.pageCount
+      //       );
+      //     });
+      //     const uniqueNewBooks = allNewBooks.filter(newBook => !isDuplicate(newBook, books));
+      //     books = [...books, ...uniqueNewBooks].slice(0, 5);
+      //     startIndex += maxResults;
+      //     if (uniqueNewBooks.length === 0) {
+      //       break;
+      //     }
+      //   }
+      // }
+      // Neue zusätzliche Anfragen für jeden Buchtitel
+
   
-      // Extrahiere die items aus allen Responses und füge sie in ein Array
-      const allBooks = responses.flatMap(response => response.data.items);
-      
-      setBooksInModal(allBooks);
+      const enrichedBooks = await Promise.all(
+        books.slice(0, 5).map(async (book, index) => {  // Added index parameter here
+          try {
+            // await delay(2000 * index);
+            const detailRes = await axios.get(
+              `https://www.googleapis.com/books/v1/volumes?q=intitle:${book.volumeInfo.title}&maxResults=1`
+            );
+            if (detailRes) {
+              return detailRes.data.items[0]
+            }
+
+            return book;
+          } catch (error) {
+            console.error(`Error fetching details for book: ${book.volumeInfo.title}`, error);
+            return book;
+          }
+        })
+      );
+      setBooksInModal(enrichedBooks);
     } catch (error) {
       console.error(error);
     } finally {
       setLoadingInModal(false);
     }
   }
-  
-
   useEffect(() => {
     getBooks();
   }, [])
-
-
   /* Modal */
-
-  const { 
+  const {
     modalVisible: innerModalVisible,
     bookIndex: innerBookIndex,
     slideAnim: innerSlideAnim,
@@ -66,19 +110,12 @@ const { user } = useGlobalContext()
     openModal: openInnerModal,
     closeModal: closeInnerModal
   } = useModal();
-
-
-
-
   // Calculate the snap interval considering margin
   const itemWidth = width * 0.92;
   const itemMargin = width * 0.02; // 2% of the screen width for margin
   const snapInterval = itemWidth + itemMargin;
-
-
   return (
     <>
-
       <Animated.View
         style={{
           transform: [
@@ -108,13 +145,11 @@ const { user } = useGlobalContext()
           )}
           initialScrollIndex={bookIndex}
           renderItem={({ item, index }) => {
-
             let title = item.volumeInfo.title
             const thumbnail = `https://books.google.com/books/publisher/content/images/frontcover/${item.id}?fife=w400-h600&source=gbs_api`
             let authors = item.volumeInfo.authors
             const description = item.volumeInfo.description
             const seiten = item.volumeInfo.pageCount
-
             return (
               <View
                 className={`bg-[#F2F2F2] rounded-t-2xl mt-20 pt-1 pb-4 relative`}
@@ -124,11 +159,9 @@ const { user } = useGlobalContext()
                   marginRight: index === 5 ? 0 : itemMargin / 2, // Adjust margin for last item
                 }}
               >
-
                 <TouchableOpacity onPress={closeModal} className=' absolute top-4 right-4 bg-[rgba(78,76,86,0.1)] rounded-full size-8 justify-center items-center z-10'>
                   <AntDesign name="close" size={18} color="black" />
                 </TouchableOpacity>
-                
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName='pt-14 z-20'>
                   <View className='px-7'>
                     <View style={{
@@ -143,7 +176,6 @@ const { user } = useGlobalContext()
                     }}>
                       <Image
                         source={{ uri: thumbnail }}
-                        
                         className='w-full h-full'
                         resizeMode="stretch"
                       />
@@ -155,9 +187,9 @@ const { user } = useGlobalContext()
                         <Text className="text-white font-bold text-lg">zur Leseliste</Text>
                         <Feather name="bookmark" size={24} color="white" />
                       </TouchableOpacity>
-                      <TouchableOpacity 
-                      onPress={()=>editActiveBooks(user, item.id)}
-                      className="flex-row  gap-2 bg-[#2DA786] px-4 w-7/12 h-12 items-center justify-center rounded-full">
+                      <TouchableOpacity
+                        onPress={() => editActiveBooks(user, item.id, item)}
+                        className="flex-row  gap-2 bg-[#2DA786] px-4 w-7/12 h-12 items-center justify-center rounded-full">
                         <Text className="text-white font-bold text-lg">Lesen</Text>
                         <Feather name="book-open" size={24} color="white" />
                       </TouchableOpacity>
@@ -168,23 +200,19 @@ const { user } = useGlobalContext()
                     <Text className="text-gray-500 mt-2 mb-12 text-base">
                       {description}
                     </Text>
-
                     <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">Ähnliche Bücher</Text>
                   </View>
                   <View className='px-2 mt-3'>
                     <Empfehlungen books={booksInModal} loading={loadingInModal} openModal={openInnerModal} />
                   </View>
                 </ScrollView>
-
-
-
               </View>
             );
           }}
         />
       </Animated.View>
       {innerModalVisible ? (
-        <Modal 
+        <Modal
           books={booksInModal}
           closeModal={closeInnerModal}
           width={width}
@@ -193,9 +221,7 @@ const { user } = useGlobalContext()
           bookIndex={innerBookIndex}
         />
       ) : null}
-
     </>
   )
 }
-
 export default Modal
