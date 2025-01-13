@@ -5,103 +5,21 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import Empfehlungen from './Empfehlungen';
 import { useModal } from './useModal';
-///imports um active Books zu bearbeiten
 import { useGlobalContext } from '@/context/GlobalProvider';
-import editActiveBooks from '@/lib/editActiveBooks'
+import editActiveBooks from '@/lib/editActiveBooks';
 
-const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, first = false }) => {
-  const { user } = useGlobalContext()
-  /* Books */
-  const [booksInModal, setBooksInModal] = useState([])
-  const [loadingInModal, setLoadingInModal] = useState(false)
-  async function getBooks() {
-    try {
-      setLoadingInModal(true);
-      let books = [];
-      let startIndex = 0;
-      const maxResults = 5;
-      const minAverageRating = 4.0;
-      function filterBooks(books) {
-        return books.filter((book) => {
-          return (
-            book.volumeInfo.title &&
-            book.volumeInfo.description &&
-            book.volumeInfo.authors &&
-            book.volumeInfo.authors.length > 0 &&
-            book.volumeInfo.imageLinks &&
-            book.volumeInfo.pageCount // &&
-            // book.volumeInfo.averageRating !== undefined &&
-            // book.volumeInfo.averageRating >= minAverageRating
-          );
-        });
-      }
-      function isDuplicate(newBook, existingBooks) {
-        return existingBooks.some(book => book.id === newBook.id);
-      }
-      const res = await axios.get(
-        `https://www.googleapis.com/books/v1/volumes?q=subject:Dystopian`
-      );
-      const newBooks = filterBooks(res.data.items);
-      const uniqueNewBooks = newBooks.filter(newBook => !isDuplicate(newBook, books));
-      books = [...books, ...uniqueNewBooks];
+const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, first = false, depth = 0 }) => {
+  const { user } = useGlobalContext();
+  const [recommendationsMap, setRecommendationsMap] = useState({});
+  const [loadingInModal, setLoadingInModal] = useState({});
+  const [visibleSections, setVisibleSections] = useState({});
 
-      // startIndex += maxResults;
-      // if (books.length < 5) {
-      //   startIndex = 0;
-      //   while (books.length < 5) {
-      //     const res = await axios.get(
-      //       `https://www.googleapis.com/books/v1/volumes?q=subject:"Dystopian"&maxResults=${maxResults}&startIndex=${startIndex}`
-      //     );
-      //     const allNewBooks = res.data.items.filter((book) => {
-      //       return (
-      //         book.volumeInfo.title &&
-      //         book.volumeInfo.description &&
-      //         book.volumeInfo.authors &&
-      //         book.volumeInfo.authors.length > 0 &&
-      //         book.volumeInfo.imageLinks &&
-      //         book.volumeInfo.pageCount
-      //       );
-      //     });
-      //     const uniqueNewBooks = allNewBooks.filter(newBook => !isDuplicate(newBook, books));
-      //     books = [...books, ...uniqueNewBooks].slice(0, 5);
-      //     startIndex += maxResults;
-      //     if (uniqueNewBooks.length === 0) {
-      //       break;
-      //     }
-      //   }
-      // }
-      // Neue zusätzliche Anfragen für jeden Buchtitel
+  // Konstanten für FlatList
+  const itemWidth = width * 0.92;
+  const itemMargin = width * 0.02;
+  const snapInterval = itemWidth + itemMargin;
 
-  
-      const enrichedBooks = await Promise.all(
-        books.slice(0, 5).map(async (book, index) => {  // Added index parameter here
-          try {
-            // await delay(2000 * index);
-            const detailRes = await axios.get(
-              `https://www.googleapis.com/books/v1/volumes?q=intitle:${book.volumeInfo.title}&maxResults=1`
-            );
-            if (detailRes) {
-              return detailRes.data.items[0]
-            }
-
-            return book;
-          } catch (error) {
-            console.error(`Error fetching details for book: ${book.volumeInfo.title}`, error);
-            return book;
-          }
-        })
-      );
-      setBooksInModal(enrichedBooks);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoadingInModal(false);
-    }
-  }
-  useEffect(() => {
-    getBooks();
-  }, [])
-  /* Modal */
+  // Modal States
   const {
     modalVisible: innerModalVisible,
     bookIndex: innerBookIndex,
@@ -110,17 +28,137 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
     openModal: openInnerModal,
     closeModal: closeInnerModal
   } = useModal();
-  // Calculate the snap interval considering margin
-  const itemWidth = width * 0.92;
-  const itemMargin = width * 0.02; // 2% of the screen width for margin
-  const snapInterval = itemWidth + itemMargin;
+
+  // Konstanten
+  const MAX_DEPTH = 3;
+  const BUFFER_DISTANCE = 200;
+
+  // Refs
+  const recommendationPositions = useRef({});
+  const scrollViewRef = useRef(null);
+
+  // Funktion zum Messen der Position der Empfehlungssektion
+  const measureRecommendationSection = (bookId, event) => {
+    const { y, height } = event.nativeEvent.layout
+    recommendationPositions.current[bookId] = {
+      start: y - height, // Etwas früher laden
+      end: y + height
+    }
+  }
+
+  const handleScroll = ({nativeEvent}) => {
+    const {layoutMeasurement, contentOffset} = nativeEvent
+    const currentScrollPosition = contentOffset.y
+    const visibleHeight = layoutMeasurement.height
+
+    // Prüfe für jedes Buch, ob dessen Empfehlungsbereich sichtbar ist
+    Object.entries(recommendationPositions.current).forEach(([bookId, position]) => {
+      const isVisible = (
+        currentScrollPosition + visibleHeight >= position.start &&
+        currentScrollPosition <= position.end
+      )
+
+      if (isVisible && !visibleSections[bookId]) {
+        setVisibleSections(prev => ({...prev, [bookId]: true}))
+        getRecommendationsForBook(bookId)
+      }
+    })
+  }
+
+
+  async function getRecommendationsForBook(bookId) {
+    if (recommendationsMap[bookId]) return
+    
+    const book = books.find(b => b.id === bookId)
+    if (!book) return
+  
+    try {
+      setLoadingInModal(prev => ({...prev, [bookId]: true}))
+      
+      const {
+        volumeInfo: {
+          categories = [],
+          language,
+        }
+      } = book
+  
+      // Wenn keine Kategorien vorhanden sind, früh zurückkehren
+      if (!categories || categories.length === 0) {
+        setRecommendationsMap(prev => ({
+          ...prev,
+          [bookId]: []
+        }))
+        return
+      }
+  
+      let booksTemp = []
+  
+      // Erstelle Suchanfragen für jede Kategorie
+      for (const category of categories) {
+        try {
+          const res = await axios.get(
+            `https://www.googleapis.com/books/v1/volumes?q=subject:"${encodeURIComponent(category)}"&langRestrict=${language}&maxResults=20&key=AIzaSyAn6btAVaCvejincnVsL-QCeDOghDMvulQ`
+          )
+          
+          // Filtere Bücher
+          const validBooks = res.data.items?.filter(book => 
+            book.volumeInfo.title &&
+            book.volumeInfo.description &&
+            book.volumeInfo.authors?.length > 0 &&
+            book.volumeInfo.imageLinks
+          ) || []
+  
+          // Füge neue, nicht-doppelte Bücher hinzu
+          for (const newBook of validBooks) {
+            if (!booksTemp.some(b => b.id === newBook.id) && newBook.id !== bookId) {
+              booksTemp.push(newBook)
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching books for category ${category}:`, error)
+        }
+      }
+  
+      // Nehme die ersten 5 Bücher
+      const topBooks = booksTemp.slice(0, 5)
+  
+      // Lade detaillierte Informationen
+      const enrichedBooks = await Promise.all(
+        topBooks.map(async (book) => {
+          try {
+            const detailRes = await axios.get(
+              `https://www.googleapis.com/books/v1/volumes/${book.id}?key=AIzaSyAn6btAVaCvejincnVsL-QCeDOghDMvulQ`
+            )
+            return detailRes.data
+          } catch (error) {
+            console.error(`Error fetching details for book: ${book.volumeInfo.title}`, error)
+            return book
+          }
+        })
+      )
+  
+      setRecommendationsMap(prev => ({
+        ...prev,
+        [bookId]: enrichedBooks
+      }))
+  
+    } catch (error) {
+      console.error('Error in getRecommendationsForBook:', error)
+    } finally {
+      setLoadingInModal(prev => ({...prev, [bookId]: false}))
+    }
+  }
+  
+
+ 
+
   return (
     <>
       <Animated.View
         style={{
           transform: [
-            { translateY: slideAnim }, // Use translateY for vertical movement
-            { scale: scaleAnim }       // Scale for zoom effect
+            { translateY: slideAnim },
+            { scale: scaleAnim }
           ],
           position: 'absolute',
           top: 0,
@@ -133,12 +171,12 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
         <FlatList
           data={books}
           horizontal
-          contentContainerStyle={{ paddingHorizontal: width * 0.04 }} // Adjust initial padding
+          contentContainerStyle={{ paddingHorizontal: width * 0.04 }}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           pagingEnabled={true}
           bounces={false}
-          snapToInterval={snapInterval} // Use dynamic snap interval with margin
+          snapToInterval={snapInterval}
           decelerationRate="fast"
           getItemLayout={(data, index) => (
             { length: itemWidth, offset: (itemWidth + itemMargin) * index, index }
@@ -150,19 +188,23 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
             let authors = item.volumeInfo.authors
             const description = item.volumeInfo.description
             const seiten = item.volumeInfo.pageCount
+
             return (
               <View
                 className={`bg-[#F2F2F2] rounded-t-2xl mt-20 pt-1 pb-4 relative`}
                 style={{
                   width: itemWidth,
-                  marginLeft: index === 0 ? 0 : itemMargin / 2, // Adjust margin for first item
-                  marginRight: index === 5 ? 0 : itemMargin / 2, // Adjust margin for last item
+                  marginLeft: index === 0 ? 0 : itemMargin / 2,
+                  marginRight: index === 5 ? 0 : itemMargin / 2,
                 }}
               >
-                <TouchableOpacity onPress={closeModal} className=' absolute top-4 right-4 bg-[rgba(78,76,86,0.1)] rounded-full size-8 justify-center items-center z-10'>
-                  <AntDesign name="close" size={18} color="black" />
-                </TouchableOpacity>
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName='pt-14 z-20'>
+                <ScrollView 
+                  ref={scrollViewRef}
+                  showsVerticalScrollIndicator={false} 
+                  contentContainerClassName='pt-14 z-20'
+                  onScroll={handleScroll}
+                  scrollEventThrottle={16}
+                >
                   <View className='px-7'>
                     <View style={{
                       width: width * 0.6,
@@ -200,10 +242,23 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                     <Text className="text-gray-500 mt-2 mb-12 text-base">
                       {description}
                     </Text>
-                    <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">Ähnliche Bücher</Text>
                   </View>
-                  <View className='px-2 mt-3'>
-                    <Empfehlungen books={booksInModal} loading={loadingInModal} openModal={openInnerModal} />
+                {/* Empfehlungssektion mit onLayout */}
+                <View 
+                    onLayout={(event) => measureRecommendationSection(item.id, event)}
+                    className='px-2 mt-3'
+                  >
+                    <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">
+                      Ähnliche Bücher
+                    </Text>
+                    {visibleSections[item.id] && (
+                      <Empfehlungen 
+                        books={recommendationsMap[item.id] || []} 
+                        loading={loadingInModal[item.id]} 
+                        openModal={openInnerModal} 
+                        inModal={true}
+                      />
+                    )}
                   </View>
                 </ScrollView>
               </View>
@@ -211,17 +266,19 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           }}
         />
       </Animated.View>
-      {innerModalVisible ? (
+
+      {innerModalVisible && depth < MAX_DEPTH ? (
         <Modal
-          books={booksInModal}
+          books={recommendationsMap[books[bookIndex]?.id] || []}
           closeModal={closeInnerModal}
           width={width}
           slideAnim={innerSlideAnim}
           scaleAnim={innerScaleAnim}
           bookIndex={innerBookIndex}
+          depth={depth + 1}
         />
       ) : null}
     </>
   )
-}
+} 
 export default Modal

@@ -2,7 +2,7 @@
 import React from 'react';
 import { ScrollView, TouchableOpacity, View, Text, Image, ActivityIndicator } from 'react-native';
 
-export default function Empfehlungen({ books, openModal, loading }) {
+export default function Empfehlungen({ books, openModal, loading, inModal = false }) {
   return (
     <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} className='mt-4'>
       {!loading ? books.map((book, index) => {
@@ -12,12 +12,12 @@ export default function Empfehlungen({ books, openModal, loading }) {
 
         return (
           (thumbnail && title && authors) ? (
-            <TouchableOpacity 
-              key={index} 
-              onPress={() => openModal(index)} 
+            <TouchableOpacity
+              key={index}
+              onPress={() => openModal(index)}
               className='mr-3 flex-1'
             >
-              <View className='w-44 h-72 drop-shadow-md mb-2 z-50' 
+              <View className='w-44 h-72 drop-shadow-md mb-2 z-50'
                 style={{
                   shadowColor: 'black',
                   shadowOffset: { width: 0, height: 6 },
@@ -26,26 +26,26 @@ export default function Empfehlungen({ books, openModal, loading }) {
                   elevation: 3,
                 }}
               >
-                <Image 
-                  source={{ uri: thumbnail }} 
-                  className='w-full h-full' 
-                  resizeMode='stretch' 
+                <Image
+                  source={{ uri: thumbnail }}
+                  className='w-full h-full'
+                  resizeMode='stretch'
                 />
               </View>
               <Text className="font-bold text-lg overflow-hidden">
-                {title.length > 17 ? `${title.substring(0, 17)}..` : title}
+                {inModal ? title.length > 12 ? `${title.substring(0, 12)}..` : title : title.length > 17 ? `${title.substring(0, 17)}..` : title}
               </Text>
               {authors.slice(0, 2).map((author, idx) => (
-                <Text key={idx} className="color-[#8C8C8C]">{author}</Text>
+                <Text key={idx} className="color-[#8C8C8C]">{inModal ? author.length > 12 ? `${author.substring(0, 12)}..` : author : author}</Text>
               ))}
             </TouchableOpacity>
           ) : null
         );
       }) : (
-        <ActivityIndicator 
-          size={'large'} 
-          color={'#2DA786'} 
-          style={{ marginLeft: 165, marginTop: 10 }} 
+        <ActivityIndicator
+          size={'large'}
+          color={'#2DA786'}
+          style={{ marginLeft: 165, marginTop: 10 }}
         />
       )}
     </ScrollView>

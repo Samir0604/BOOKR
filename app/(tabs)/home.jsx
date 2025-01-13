@@ -4,7 +4,6 @@ import BookProgress from '@/components/BookProgress'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { LogBox } from 'react-native';
 
 import axios from 'axios';
 
@@ -32,7 +31,7 @@ const home = () => {
   async function getBooks() {
     try {
       setLoading(true)
-      const res = await axios.get('https://www.googleapis.com/books/v1/volumes?q=intitle:1984+inauthor:George+Orwell&maxResults=5')
+      const res = await axios.get('https://www.googleapis.com/books/v1/volumes?q=intitle:1984+inauthor:George+Orwell&langRestrict=de&key=AIzaSyAn6btAVaCvejincnVsL-QCeDOghDMvulQ&maxResults=5')
       setBooks(res.data.items)
       setLoading(false)
     } catch (error) {
