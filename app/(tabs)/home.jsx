@@ -109,48 +109,112 @@ const home = () => {
       let allBooks = [];
       const categories = getRandomCategories();
       
-      const bookPromises = categories.map(category =>
-        axios.get('https://www.googleapis.com/books/v1/volumes', {
-          params: {
-            q: `subject:${category}`,
-            maxResults: 40,
-            orderBy: 'relevance',
+      // Hilfsfunktion zur Validierung eines Buches
+      const isValidBook = (book) => {
+        return (
+          book.volumeInfo?.title &&
+          book.volumeInfo?.authors?.length > 0 &&
+          book.volumeInfo?.imageLinks?.thumbnail &&
+          book.volumeInfo?.description &&
+          book.volumeInfo?.pageCount
+        );
+      };
+  
+      // Hilfsfunktion zum Enrichment eines Buches
+      const enrichBook = async (book, language = 'de') => {
+        try {
+          const enrichResponse = await axios.get(
+            'https://www.googleapis.com/books/v1/volumes',
+            {
+              params: {
+                q: `intitle:"${book.volumeInfo.title}" inauthor:"${book.volumeInfo.authors[0]}"`,
+                langRestrict: language,
+                maxResults: 1,
+                orderBy: 'relevance',
+              }
+            }
+          );
+  
+          if (
+            enrichResponse.data?.items?.[0] &&
+            isValidBook(enrichResponse.data.items[0])
+          ) {
+            return enrichResponse.data.items[0];
           }
-        })
-      );
-  
-      const responses = await Promise.all(bookPromises);
-      
-      responses.forEach(res => {
-        if (res.data.items && res.data.items.length > 0) {
-          const shuffledBooks = [...res.data.items]
-            .sort(() => Math.random() - 0.5);
-          const randomTwoBooks = shuffledBooks.slice(0, 2);
-          allBooks = [...allBooks, ...randomTwoBooks];
+          return book;
+        } catch (error) {
+          console.error('Enrichment error:', error);
+          return book;
         }
-      });
+      };
   
-      // Speichern der neuen Bücher und des Zeitstempels
-      await AsyncStorage.setItem('weeklyBooks', JSON.stringify(allBooks));
-      await AsyncStorage.setItem('lastBooksUpdate', new Date().toISOString());
+      // Für jede Kategorie Bücher abrufen
+      for (const category of categories) {
+        let validBooksFound = 0;
+        let attempts = 0;
+        const maxAttempts = 3; // Maximale Anzahl von Versuchen pro Kategorie
+        
+        while (validBooksFound < 2 && attempts < maxAttempts) {
+          try {
+            const response = await axios.get('https://www.googleapis.com/books/v1/volumes', {
+              params: {
+                q: `subject:${category}`,
+                maxResults: 40,
+                orderBy: 'relevance',
+                langRestrict: 'de',
+              }
+            });
   
-      setBooks(allBooks);
+            if (response.data.items && response.data.items.length > 0) {
+              // Filtere valide Bücher
+              const validBooks = response.data.items
+                .filter(isValidBook)
+                .sort(() => Math.random() - 0.5);
+  
+              // Nehme die ersten 2 validen Bücher
+              for (const book of validBooks) {
+                if (validBooksFound < 2) {
+                  // Enrichment für jedes valide Buch
+                  const enrichedBook = await enrichBook(book);
+                  if (isValidBook(enrichedBook)) {
+                    allBooks.push({
+                      ...enrichedBook,
+                      subject: category
+                    });
+                    validBooksFound++;
+                  }
+                } else {
+                  break;
+                }
+              }
+            }
+          } catch (error) {
+            console.error(`Error fetching books for category ${category}:`, error);
+          }
+          attempts++;
+        }
+      }
+  
+      // Wenn wir genug Bücher haben, speichern und setzen
+      if (allBooks.length > 0) {
+        await AsyncStorage.setItem('weeklyBooks', JSON.stringify(allBooks));
+        await AsyncStorage.setItem('lastBooksUpdate', new Date().toISOString());
+        setBooks(allBooks);
+      }
+  
     } catch (error) {
-      console.error(error);
+      console.error('Error in getBooks:', error);
     } finally {
       setLoading(false);
     }
   }
+
   
   // Im useEffect
-  useEffect(() => {
-    getBooks();
-  }, []);
-
-
 
   useEffect(() => {
     getBooks();
+    
   }, [])
 
 
