@@ -7,33 +7,50 @@ import getActiveBooks from '../../lib/getActiveBooks';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import BookListingLib from '@/components/bookListingLib';
 import AddBookLib from '@/components/addBookLib';
+import getSavedBooks from '@/lib/getSavedBooks';
 
 export default function bibliothek() {
   const { user } = useGlobalContext();
   const [isLoading, setIsLoading] = useState(true)
   const [activeBook, setActiveBook]= useState(null)
+  const [savedBooks, setSavedBooks] = useState(null)
+  
+  
+  const fetchBooks = async () => {
+    try {
+        const [activeBook, savedBooks] = await Promise.all([
+            getActiveBooks(user),
+            getSavedBooks(user)
+        ]);
 
-  const fetchActiveBooks = async()=>{
-    try{
-      const activeBook = await getActiveBooks(user);
-      
-      if(activeBook){
-        setActiveBook(activeBook)
-        console.log("book progress in useState")
-      }else{
-        console.log("user hat kein Buch aktiv")
-      }
+        if (activeBook) {
+            setActiveBook(activeBook);
+            console.log("active book in useState");
+        } else {
+            console.log("user hat kein Buch aktiv");
+        }
 
-    }catch(error){
-      console.log("error bei fetchen", error)
-    }finally{
-      setIsLoading(false);
+        if (savedBooks) {
+            setSavedBooks(savedBooks);
+            console.log("saved books in useState");
+        } else {
+            console.log("user hat keine Bücher saved");
+            setSavedBooks([]);
+        }
+
+        } catch (error) {
+            console.log("error bei fetchen", error);
+            setSavedBooks([]);
+        } finally {
+            setIsLoading(false);
+        }
     }
-  }
 
-  useEffect(()=>{
-    fetchActiveBooks()
-  },[user])
+useEffect(() => {
+    fetchBooks();
+}, [user])
+
+
 
   if (isLoading) {
     return (
@@ -62,12 +79,20 @@ export default function bibliothek() {
           </View>
 
           {activeBook
-            ? <View className="flex flex-row gap-5">
-                <BookListingLib activeBook={activeBook}/>
-                <AddBookLib />
-              </View>
+            ? <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false} 
+                  className="flex"
+              >
+                <View className="flex flex-row gap-5">
+                  <BookListingLib book={activeBook}/>
+                  <AddBookLib />
+                </View>
+
+              </ScrollView>
             
             : <AddBookLib />
+
           }
 
 
@@ -81,20 +106,32 @@ export default function bibliothek() {
           </View>
 
 
-          {activeBook
 
-          ? <View className="flex flex-row gap-5">
-              {activeBook.map((savedBook) => (    // Runde Klammern statt geschweifter
-                <BookListingLib 
-                key={savedBook.$id}             // Eindeutiger key hinzugefügt
-                activeBook={savedBook}
-                />
-              ))}
-              <AddBookLib />
-            </View>
-  
-          : <AddBookLib />
+
+          {savedBooks
+            ?<ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false} 
+              className="flex"
+            >
+
+              <View className="flex flex-row gap-5">
+                {savedBooks.map((savedBook)=>{
+                  return(
+                    <BookListingLib book={savedBook}/>
+                        )
+                })}
+                <AddBookLib />
+              </View>
+
+             </ScrollView>
+            
+            : <AddBookLib />
+
           }
+
+
+         
 
 
 

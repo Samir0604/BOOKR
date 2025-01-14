@@ -7,6 +7,7 @@ import Empfehlungen from './Empfehlungen';
 import { useModal } from './useModal';
 import { useGlobalContext } from '@/context/GlobalProvider';
 import editActiveBooks from '@/lib/editActiveBooks';
+import likeBook from '@/lib/buchMerken';
 
 const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, first = false, depth = 0 }) => {
   const { user } = useGlobalContext();
@@ -225,7 +226,9 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                     <Text className="text-xl mt-5 font-bold text-center">{title}</Text>
                     {authors.map((author, index) => (<Text className="text-center text-gray-600">{author}</Text>))}
                     <View className="flex-col items-center gap-2 justify-center mt-3">
-                      <TouchableOpacity className="flex-row  gap-2 bg-black py-2 px-4 w-7/12 h-12 items-center justify-center rounded-full">
+                      <TouchableOpacity 
+                      onPress={()=>likeBook(user,item.id, item)}
+                      className="flex-row  gap-2 bg-black py-2 px-4 w-7/12 h-12 items-center justify-center rounded-full">
                         <Text className="text-white font-bold text-lg">zur Leseliste</Text>
                         <Feather name="bookmark" size={24} color="white" />
                       </TouchableOpacity>
