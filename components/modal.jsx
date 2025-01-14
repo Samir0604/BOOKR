@@ -6,10 +6,7 @@ import Empfehlungen from './Empfehlungen';
 import { useModal } from './useModal';
 import { useGlobalContext } from '@/context/GlobalProvider';
 import editActiveBooks from '@/lib/editActiveBooks';
-import { AntDesign } from '@expo/vector-icons';
-
-// Cache für API-Anfragen
-const apiCache = new Map();
+import likeBook from '@/lib/buchMerken';
 
 const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, first = false, depth = 0 }) => {
   const { user } = useGlobalContext();
@@ -248,22 +245,52 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                 showsVerticalScrollIndicator={false}
                 contentContainerClassName="pt-14 z-20"
               >
-                <View className="px-7">
-                  <View style={{
-                    width: width * 0.6,
-                    height: width * 0.9,
-                    alignSelf: 'center',
-                    shadowColor: 'black',
-                    shadowOffset: { height: 10 },
-                    shadowOpacity: 0.8,
-                    shadowRadius: 20,
-                    elevation: 3,
-                  }}>
-                    <Image
-                      source={{ uri: `https://books.google.com/books/publisher/content/images/frontcover/${item.id}?fife=w400-h600&source=gbs_api` }}
-                      className="w-full h-full"
-                      resizeMode="stretch"
-                    />
+                <ScrollView 
+                  ref={scrollViewRef}
+                  showsVerticalScrollIndicator={false} 
+                  contentContainerClassName='pt-14 z-20'
+                  onScroll={handleScroll}
+                  scrollEventThrottle={16}
+                >
+                  <View className='px-7'>
+                    <View style={{
+                      width: width * 0.6,
+                      height: width * 0.9,
+                      alignSelf: 'center',
+                      shadowColor: 'black',
+                      shadowOffset: { height: 10 },
+                      shadowOpacity: 0.8,
+                      shadowRadius: 20,
+                      elevation: 3,
+                    }}>
+                      <Image
+                        source={{ uri: thumbnail }}
+                        className='w-full h-full'
+                        resizeMode="stretch"
+                      />
+                    </View>
+                    <Text className="text-xl mt-5 font-bold text-center">{title}</Text>
+                    {authors.map((author, index) => (<Text className="text-center text-gray-600">{author}</Text>))}
+                    <View className="flex-col items-center gap-2 justify-center mt-3">
+                      <TouchableOpacity 
+                      onPress={()=>likeBook(user,item.id, item)}
+                      className="flex-row  gap-2 bg-black py-2 px-4 w-7/12 h-12 items-center justify-center rounded-full">
+                        <Text className="text-white font-bold text-lg">zur Leseliste</Text>
+                        <Feather name="bookmark" size={24} color="white" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => editActiveBooks(user, item.id, item)}
+                        className="flex-row  gap-2 bg-[#2DA786] px-4 w-7/12 h-12 items-center justify-center rounded-full">
+                        <Text className="text-white font-bold text-lg">Lesen</Text>
+                        <Feather name="book-open" size={24} color="white" />
+                      </TouchableOpacity>
+                    </View>
+                    <Text className="text-center text-gray-600 text-lg font-semibold mt-2">Seiten: {seiten}</Text>
+                    <Text className="mt-5 text-lg text-center text-[#8C8C8C] border-b border-b-0.5 border-[#8C8C8C] pb-3">Psychologie 📚 | Geografie 🌍 | Wissen 💡</Text>
+                    <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">Beschreibung</Text>
+                    <Text className="text-gray-500 mt-2 mb-12 text-base">
+                      {description}
+                    </Text>
                   </View>
                   
                   <Text className="text-xl mt-5 font-bold text-center">
