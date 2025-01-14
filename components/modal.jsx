@@ -16,7 +16,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
   const { user } = useGlobalContext();
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   const itemWidth = width * 0.92;
   const itemMargin = width * 0.02;
   const snapInterval = itemWidth + itemMargin;
@@ -33,169 +33,166 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
   const MAX_DEPTH = 3;
   const scrollViewRef = useRef(null);
 
-  const getRecommendations = async (book) => {
-    if (!book) return [];
-    
+  const [recommendationsMap, setRecommendationsMap] = useState(new Map());
+
+  const getRecommendations = async (book, currentIndex) => {
+    if (!book) return;
+
     setLoading(true);
-    const cacheKey = `recommendations-${book.id}`;
-    
+    const cacheKey = `recommendations-${book.id}-${currentIndex}`;
+
     try {
       if (apiCache.has(cacheKey)) {
-        setRecommendations(apiCache.get(cacheKey));
+        const cachedRecommendations = apiCache.get(cacheKey);
+        setRecommendationsMap(prev => new Map(prev).set(currentIndex, cachedRecommendations));
         setLoading(false);
         return;
       }
-  
+
       const {
         volumeInfo: {
-          categories = [],
           authors = [],
           title = '',
-          language = 'de'
-        }
+          language = 'de',
+          categories = []
+        },
+        subject
       } = book;
-  
-      // 1. Zwei Bücher vom selben Autor
-      let authorBooks = [];
+
+      // API calls für das aktuelle Buch
+      let allBooks = [];
+
+      // 1. Bücher vom selben Autor mit gleichem Subject und Kategorie
       if (authors[0]) {
         const authorResponse = await axios.get(
           `https://www.googleapis.com/books/v1/volumes`, {
-            params: {
-              q: `inauthor:"${authors[0]}"`,
-              langRestrict: language,
-              maxResults: 20,
-              orderBy: 'relevance',
-              key: 'AIzaSyAn6btAVaCvejincnVsL-QCeDOghDMvulQ'
-            }
+          params: {
+            q: `inauthor:"${authors[0]}" subject:"${subject}" subject:"${categories[0] || ''}"`,
+            langRestrict: language,
+            maxResults: 40,
+            orderBy: 'relevance',
           }
-        );
-  
-        const existingTitles = new Set([title.toLowerCase().trim()]);
-  
-        authorBooks = (authorResponse.data?.items || [])
+        });
+
+        const authorBooks = (authorResponse.data?.items || [])
           .filter(b => {
             const bookTitle = b.volumeInfo?.title?.toLowerCase().trim();
-            if (existingTitles.has(bookTitle)) return false;
-            if (
-              bookTitle &&
-              b.volumeInfo?.authors?.length > 0 &&
-              b.volumeInfo?.imageLinks?.thumbnail
-            ) {
-              existingTitles.add(bookTitle);
-              return true;
-            }
-            return false;
-          })
-          .slice(0, 2);
-      }
-  
-      // 2. Drei Bücher aus der gleichen Kategorie
-      let categoryBooks = [];
-      if (categories[0]) {
-        const categoryResponse = await axios.get(
-          `https://www.googleapis.com/books/v1/volumes`, {
-            params: {
-              q: `subject:"${categories[0]}"`,
-              langRestrict: language,
-              maxResults: 40,
-              orderBy: 'relevance',
-              key: 'AIzaSyAn6btAVaCvejincnVsL-QCeDOghDMvulQ'
-            }
-          }
-        );
-  
-        const existingTitles = new Set([
-          title.toLowerCase().trim(),
-          ...authorBooks.map(b => b.volumeInfo.title.toLowerCase().trim())
-        ]);
-  
-        let filteredBooks = (categoryResponse.data?.items || [])
-          .filter(b => {
-            const bookTitle = b.volumeInfo?.title?.toLowerCase().trim();
-            const ratings = b.volumeInfo?.ratingsCount || 0;
-            const avgRating = b.volumeInfo?.averageRating || 0;
-            
             return (
-              !existingTitles.has(bookTitle) &&
-              !b.volumeInfo?.authors?.includes(authors[0]) &&
-              b.volumeInfo?.title &&
+              bookTitle !== title.toLowerCase().trim() &&
               b.volumeInfo?.authors?.length > 0 &&
               b.volumeInfo?.imageLinks?.thumbnail &&
-              ratings >= 3 && 
-              avgRating >= 3.5
+              b.volumeInfo?.description &&
+              b.volumeInfo?.pageCount
             );
           })
-          .sort((a, b) => {
-            const ratingA = a.volumeInfo.averageRating || 0;
-            const ratingB = b.volumeInfo.averageRating || 0;
-            return ratingB - ratingA;
-          });
-  
-        if (filteredBooks.length < 3) {
-          filteredBooks = (categoryResponse.data?.items || [])
-            .filter(b => {
-              const bookTitle = b.volumeInfo?.title?.toLowerCase().trim();
-              return (
-                !existingTitles.has(bookTitle) &&
-                !b.volumeInfo?.authors?.includes(authors[0]) &&
-                b.volumeInfo?.title &&
-                b.volumeInfo?.authors?.length > 0 &&
-                b.volumeInfo?.imageLinks?.thumbnail
-              );
-            });
-        }
-  
-        categoryBooks = filteredBooks.slice(0, 3);
-      }
-  
-      let validBooks = [...authorBooks, ...categoryBooks];
+          .map(b => ({
+            ...b,
+            subject: subject
+          }))
+          .slice(0, 2);
 
-      // Enrichment Step: Für jedes Buch die beste Version finden
+        allBooks = [...allBooks, ...authorBooks];
+      }
+
+      // 2. Bücher aus dem gleichen Subject und Kategorie
+      const categoryResponse = await axios.get(
+        `https://www.googleapis.com/books/v1/volumes`, {
+        params: {
+          q: `subject:"${subject}" subject:"${categories[0] || ''}"`,
+          langRestrict: language,
+          maxResults: 40,
+          orderBy: 'relevance',
+        }
+      });
+
+      const categoryBooks = (categoryResponse.data?.items || [])
+        .filter(b => {
+          const bookTitle = b.volumeInfo?.title?.toLowerCase().trim();
+          return (
+            bookTitle !== title.toLowerCase().trim() &&
+            !b.volumeInfo?.authors?.includes(authors[0]) &&
+            b.volumeInfo?.title &&
+            b.volumeInfo?.authors?.length > 0 &&
+            b.volumeInfo?.imageLinks?.thumbnail &&
+            b.volumeInfo?.description &&
+            b.volumeInfo?.pageCount
+          );
+        })
+        .map(b => ({
+          ...b,
+          subject: subject
+        }))
+        .slice(0, 3);
+
+      allBooks = [...allBooks, ...categoryBooks];
+
+      // Enrichment Step
       const enrichedBooks = await Promise.all(
-        validBooks.map(async (book) => {
+        allBooks.map(async (book) => {
           try {
             const enrichResponse = await axios.get(
               `https://www.googleapis.com/books/v1/volumes`, {
-                params: {
-                  q: `intitle:"${book.volumeInfo.title}" inauthor:"${book.volumeInfo.authors[0]}"`,
-                  langRestrict: language,
-                  maxResults: 1,
-                  orderBy: 'relevance',
-                  key: 'AIzaSyAn6btAVaCvejincnVsL-QCeDOghDMvulQ'
-                }
+              params: {
+                q: `intitle:"${book.volumeInfo.title}" inauthor:"${book.volumeInfo.authors[0]}" subject:"${subject}" subject:"${categories[0] || ''}"`,
+                langRestrict: language,
+                maxResults: 1,
+                orderBy: 'relevance',
               }
-            );
+            });
 
-            // Wenn ein Ergebnis gefunden wurde und es ein Thumbnail hat,
-            // verwende das neue Ergebnis, sonst behalte das originale Buch
             if (
               enrichResponse.data?.items?.[0]?.volumeInfo?.imageLinks?.thumbnail &&
-              enrichResponse.data?.items?.[0]?.volumeInfo?.title
+              enrichResponse.data?.items?.[0]?.volumeInfo?.description &&
+              enrichResponse.data?.items?.[0]?.volumeInfo?.pageCount
             ) {
-              return enrichResponse.data.items[0];
+              return {
+                ...enrichResponse.data.items[0],
+                subject: subject
+              };
             }
             return book;
           } catch (error) {
-            console.error('Fehler beim Enrichment:', error);
-            return book; // Bei Fehler originales Buch behalten
+            return book;
           }
         })
       );
-  
+
+      // Cache die Ergebnisse
       apiCache.set(cacheKey, enrichedBooks);
-      setRecommendations(enrichedBooks);
-  
+      setRecommendationsMap(prev => new Map(prev).set(currentIndex, enrichedBooks));
+
     } catch (error) {
       console.error('Fehler beim Laden der Empfehlungen:', error);
-      setRecommendations([]);
+      setRecommendationsMap(prev => new Map(prev).set(currentIndex, []));
     } finally {
       setLoading(false);
     }
-};
+  };
 
+
+  // Lade Empfehlungen wenn sich der Index ändert
+  const [currentBookIndex, setCurrentBookIndex] = useState(bookIndex);
 
   useEffect(() => {
+    if (books[currentBookIndex]) {
+      getRecommendations(books[currentBookIndex], currentBookIndex);
+    }
+  }, [currentBookIndex]);
+
+  // FlatList onViewableItemsChanged Handler
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      const newIndex = viewableItems[0].index;
+      setCurrentBookIndex(newIndex);
+    }
+  }).current;
+
+
+  // Reset recommendations und Cache wenn sich das Buch ändert
+  useEffect(() => {
     if (books[bookIndex]) {
+      setRecommendations([]); // Reset recommendations
+      apiCache.clear(); // Clear cache
       getRecommendations(books[bookIndex]);
     }
   }, [bookIndex, books]);
@@ -217,6 +214,10 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
         }}
       >
         <FlatList
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={{
+            itemVisiblePercentThreshold: 50
+          }}
           data={books}
           horizontal
           contentContainerStyle={{ paddingHorizontal: width * 0.04 }}
@@ -234,7 +235,8 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           initialScrollIndex={bookIndex}
           renderItem={({ item, index }) => (
             <View
-              className="bg-[#F2F2F2] rounded-t-2xl mt-20 pt-1 pb-4 relative"
+
+              className= "bg-[#F2F2F2] rounded-t-2xl mt-20 pt-1 pb-4 relative"
               style={{
                 width: itemWidth,
                 marginLeft: index === 0 ? 0 : itemMargin / 2,
@@ -266,11 +268,11 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                       resizeMode="stretch"
                     />
                   </View>
-                  
+
                   <Text className="text-xl mt-5 font-bold text-center">
                     {item.volumeInfo.title}
                   </Text>
-                  
+
                   {item.volumeInfo.authors?.map((author, idx) => (
                     <Text key={idx} className="text-center text-gray-600">
                       {author}
@@ -278,13 +280,14 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                   ))}
 
                   <View className="flex-col items-center gap-2 justify-center mt-3">
-                    <TouchableOpacity 
-                    onPress={()=>likeBook(user, item.id, item)}
-                    className="flex-row gap-2 bg-black py-2 px-4 w-7/12 h-12 items-center justify-center rounded-full">
+                    <TouchableOpacity
+                      onPress={() => likeBook(user, item.id, item)}
+                      className="flex-row gap-2 bg-black py-2 px-4 w-7/12 h-12 items-center justify-center rounded-full"
+                    >
                       <Text className="text-white font-bold text-lg">zur Leseliste</Text>
                       <Feather name="bookmark" size={24} color="white" />
                     </TouchableOpacity>
-                    
+
                     <TouchableOpacity
                       onPress={() => editActiveBooks(user, item.id, item)}
                       className="flex-row gap-2 bg-[#2DA786] px-4 w-7/12 h-12 items-center justify-center rounded-full"
@@ -301,7 +304,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                   <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">
                     Beschreibung
                   </Text>
-                  
+
                   <Text className="text-gray-500 mt-2 mb-12 text-base">
                     {item.volumeInfo.description}
                   </Text>
@@ -313,11 +316,11 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                       Ähnliche Bücher
                     </Text>
                     <Empfehlungen
-                      books={recommendations}
-                      loading={loading}
-                      openModal={openInnerModal}
-                      inModal={true}
-                    />
+                    books={recommendationsMap.get(index) || []}
+                    loading={loading && currentBookIndex === index}
+                    openModal={openInnerModal}
+                    inModal={true}
+                  />
                   </View>
                 )}
               </ScrollView>
@@ -328,7 +331,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
 
       {innerModalVisible && depth < MAX_DEPTH && (
         <Modal
-          books={recommendations}
+          books={recommendationsMap.get(currentBookIndex) || []}
           closeModal={closeInnerModal}
           width={width}
           slideAnim={innerSlideAnim}
