@@ -4,6 +4,9 @@ import BookProgress from '@/components/BookProgress'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { account } from '@/lib/appwrite';
+
 
 import axios from 'axios';
 
@@ -19,8 +22,30 @@ import { useModal } from '@/components/useModal';
 const { width } = Dimensions.get('window');
 
 const home = () => {
-  
+
   const { user } = useGlobalContext()
+
+  function getRandomCategories() {
+    let tempArray = [...user.liked_categories];
+    let result = [];
+
+    if (tempArray.length === 0) {
+      return 'No categories available';
+    }
+
+    // Bestimme die Anzahl der zu wählenden Kategorien (maximal 3)
+    const numberOfCategories = Math.min(3, tempArray.length);
+
+    for (let i = 0; i < numberOfCategories; i++) {
+      const randomIndex = Math.floor(Math.random() * tempArray.length);
+      result.push(tempArray[randomIndex]);
+      tempArray.splice(randomIndex, 1);
+    }
+
+    return result;
+  }
+
+
 
 
   /* Books */
@@ -28,24 +53,100 @@ const home = () => {
 
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(false)
- async function getBooks() {
-  try {
-    setLoading(true)
-    const res = await axios.get('https://www.googleapis.com/books/v1/volumes', {
-      params: {
-        q: 'subject:"Dystopian"',
-        maxResults: 40,
-        orderBy: 'relevance',
+
+  const shouldUpdateBooks = async () => {
+    try {
+      const lastUpdate = await AsyncStorage.getItem('lastBooksUpdate');
+      
+      // Prüfe ob eine aktive Session existiert
+      const session = await account.getSession('current');
+      
+      // Wenn keine Session existiert oder kein letztes Update, dann Update erforderlich
+      if (!session || !lastUpdate) return true;
+  
+      const lastUpdateDate = new Date(lastUpdate);
+      const currentDate = new Date();
+      const diffTime = Math.abs(currentDate - lastUpdateDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+      // Prüfe ob die Session nach dem letzten Update gestartet wurde
+      const sessionStartTime = new Date(session.$createdAt);
+      const hasNewSession = sessionStartTime > lastUpdateDate;
+  
+      // Update wenn 7 Tage vergangen sind ODER eine neue Session existiert
+      return diffDays >= 7 || hasNewSession;
+    } catch (error) {
+      console.error('Error checking update time:', error);
+      return true;
+    }
+  };
+  
+  // Modifizierte getBooks Funktion
+  async function getBooks() {
+    try {
+      setLoading(true);
+  
+      // Prüfe ob eine aktive Session existiert
+      try {
+        await account.getSession('current');
+      } catch (error) {
+        console.log('No active session');
+        setLoading(false);
+        return;
       }
-    })
-    setBooks(res.data.items)
-    setLoading(false)
-  } catch (error) {
-    console.error(error)
-  } finally {
-    setLoading(false)
+  
+      // Prüfen ob gespeicherte Bücher existieren und noch aktuell sind
+      const shouldUpdate = await shouldUpdateBooks();
+      if (!shouldUpdate) {
+        const storedBooks = await AsyncStorage.getItem('weeklyBooks');
+        if (storedBooks) {
+          setBooks(JSON.parse(storedBooks));
+          setLoading(false);
+          return;
+        }
+      }
+  
+      let allBooks = [];
+      const categories = getRandomCategories();
+      
+      const bookPromises = categories.map(category =>
+        axios.get('https://www.googleapis.com/books/v1/volumes', {
+          params: {
+            q: `subject:${category}`,
+            maxResults: 40,
+            orderBy: 'relevance',
+          }
+        })
+      );
+  
+      const responses = await Promise.all(bookPromises);
+      
+      responses.forEach(res => {
+        if (res.data.items && res.data.items.length > 0) {
+          const shuffledBooks = [...res.data.items]
+            .sort(() => Math.random() - 0.5);
+          const randomTwoBooks = shuffledBooks.slice(0, 2);
+          allBooks = [...allBooks, ...randomTwoBooks];
+        }
+      });
+  
+      // Speichern der neuen Bücher und des Zeitstempels
+      await AsyncStorage.setItem('weeklyBooks', JSON.stringify(allBooks));
+      await AsyncStorage.setItem('lastBooksUpdate', new Date().toISOString());
+  
+      setBooks(allBooks);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }
-}
+  
+  // Im useEffect
+  useEffect(() => {
+    getBooks();
+  }, []);
+
 
 
   useEffect(() => {
@@ -91,12 +192,8 @@ const home = () => {
                 marginTop: 32,
               }}
             >
-
               <View className='p-4'>
-
-                {/* Container für Überschrift und Text */}
                 <View className='flex-col gap-2'>
-
                   <View className='flex flex-row items-center'>
                     <Text className='text-3xl font-bold'>Empfehlungen für dich </Text>
                     <MaterialIcons
@@ -106,21 +203,23 @@ const home = () => {
                     />
                   </View>
 
-                  <Text
-                    className='color-[#8C8C8C] font-medium text-lg'
-                    style={{ lineHeight: 22 }}
-                  >Für dich zusammengestellt: Lass dich von unserer Auswahl inspirieren
-                  </Text>
-
+                  <View>
+                    <Text
+                      className='color-[#8C8C8C] font-medium text-lg'
+                      style={{ lineHeight: 22 }}
+                    >
+                      Für dich zusammengestellt: Lass dich von unserer Auswahl inspirieren
+                    </Text>
+                  </View>
                 </View>
 
-                <Empfehlungen books={books} loading={loading} openModal={openModal} /> {/* books wird gepassed um diese zu displayen, loading für den loading state, und openModal weil in empfehlungen der onpress ist um was modal zu öffnen */}
-
-
+                <Empfehlungen
+                  books={books}
+                  loading={loading}
+                  openModal={openModal}
+                />
               </View>
-
             </LinearGradient>
-
             {/* <TouchableOpacity onPress={() => likeBook(user, 'hahahoho')}><Text>Hi</Text></TouchableOpacity> */}
           </View>
         </SafeAreaView>

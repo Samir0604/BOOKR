@@ -35,8 +35,10 @@ export default function Empfehlungen({ books, openModal, loading, inModal = fals
               <Text className="font-bold text-lg overflow-hidden">
                 {inModal ? title.length > 12 ? `${title.substring(0, 12)}..` : title : title.length > 17 ? `${title.substring(0, 17)}..` : title}
               </Text>
-              {authors.slice(0, 2).map((author, idx) => (
-                <Text key={idx} className="color-[#8C8C8C]">{inModal ? author.length > 12 ? `${author.substring(0, 12)}..` : author : author}</Text>
+              {authors.slice(0, 2).map((author, id) => (
+                <Text key={id} className="color-[#8C8C8C]">
+                  {inModal ? author.length > 12 ? `${author.substring(0, 12)}..` : author : author.length > 20 ? `${author.substring(0, 20)}..`: author}
+                </Text>
               ))}
             </TouchableOpacity>
           ) : null
