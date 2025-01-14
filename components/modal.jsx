@@ -1,25 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Animated, Image, FlatList, ScrollView, Dimensions } from 'react-native';
 import axios from 'axios';
-import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 import Empfehlungen from './Empfehlungen';
 import { useModal } from './useModal';
 import { useGlobalContext } from '@/context/GlobalProvider';
 import editActiveBooks from '@/lib/editActiveBooks';
+import { AntDesign } from '@expo/vector-icons';
+
+// Cache für API-Anfragen
+const apiCache = new Map();
 
 const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, first = false, depth = 0 }) => {
   const { user } = useGlobalContext();
-  const [recommendationsMap, setRecommendationsMap] = useState({});
-  const [loadingInModal, setLoadingInModal] = useState({});
-  const [visibleSections, setVisibleSections] = useState({});
-
-  // Konstanten für FlatList
+  const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
   const itemWidth = width * 0.92;
   const itemMargin = width * 0.02;
   const snapInterval = itemWidth + itemMargin;
 
-  // Modal States
   const {
     modalVisible: innerModalVisible,
     bookIndex: innerBookIndex,
@@ -29,128 +29,175 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
     closeModal: closeInnerModal
   } = useModal();
 
-  // Konstanten
   const MAX_DEPTH = 3;
-  const BUFFER_DISTANCE = 200;
-
-  // Refs
-  const recommendationPositions = useRef({});
   const scrollViewRef = useRef(null);
 
-  // Funktion zum Messen der Position der Empfehlungssektion
-  const measureRecommendationSection = (bookId, event) => {
-    const { y, height } = event.nativeEvent.layout
-    recommendationPositions.current[bookId] = {
-      start: y - height, // Etwas früher laden
-      end: y + height
-    }
-  }
-
-  const handleScroll = ({nativeEvent}) => {
-    const {layoutMeasurement, contentOffset} = nativeEvent
-    const currentScrollPosition = contentOffset.y
-    const visibleHeight = layoutMeasurement.height
-
-    // Prüfe für jedes Buch, ob dessen Empfehlungsbereich sichtbar ist
-    Object.entries(recommendationPositions.current).forEach(([bookId, position]) => {
-      const isVisible = (
-        currentScrollPosition + visibleHeight >= position.start &&
-        currentScrollPosition <= position.end
-      )
-
-      if (isVisible && !visibleSections[bookId]) {
-        setVisibleSections(prev => ({...prev, [bookId]: true}))
-        getRecommendationsForBook(bookId)
-      }
-    })
-  }
-
-
-  async function getRecommendationsForBook(bookId) {
-    if (recommendationsMap[bookId]) return
+  const getRecommendations = async (book) => {
+    if (!book) return [];
     
-    const book = books.find(b => b.id === bookId)
-    if (!book) return
-  
+    setLoading(true);
+    const cacheKey = `recommendations-${book.id}`;
+    
     try {
-      setLoadingInModal(prev => ({...prev, [bookId]: true}))
-      
+      if (apiCache.has(cacheKey)) {
+        setRecommendations(apiCache.get(cacheKey));
+        setLoading(false);
+        return;
+      }
+  
       const {
         volumeInfo: {
           categories = [],
-          language,
+          authors = [],
+          title = '',
+          language = 'de'
         }
-      } = book
+      } = book;
   
-      // Wenn keine Kategorien vorhanden sind, früh zurückkehren
-      if (!categories || categories.length === 0) {
-        setRecommendationsMap(prev => ({
-          ...prev,
-          [bookId]: []
-        }))
-        return
-      }
-  
-      let booksTemp = []
-  
-      // Erstelle Suchanfragen für jede Kategorie
-      for (const category of categories) {
-        try {
-          const res = await axios.get(
-            `https://www.googleapis.com/books/v1/volumes?q=subject:"${encodeURIComponent(category)}"&langRestrict=${language}&maxResults=20&key=AIzaSyAn6btAVaCvejincnVsL-QCeDOghDMvulQ`
-          )
-          
-          // Filtere Bücher
-          const validBooks = res.data.items?.filter(book => 
-            book.volumeInfo.title &&
-            book.volumeInfo.description &&
-            book.volumeInfo.authors?.length > 0 &&
-            book.volumeInfo.imageLinks
-          ) || []
-  
-          // Füge neue, nicht-doppelte Bücher hinzu
-          for (const newBook of validBooks) {
-            if (!booksTemp.some(b => b.id === newBook.id) && newBook.id !== bookId) {
-              booksTemp.push(newBook)
+      // 1. Zwei Bücher vom selben Autor
+      let authorBooks = [];
+      if (authors[0]) {
+        const authorResponse = await axios.get(
+          `https://www.googleapis.com/books/v1/volumes`, {
+            params: {
+              q: `inauthor:"${authors[0]}"`,
+              langRestrict: language,
+              maxResults: 20,
+              orderBy: 'relevance',
+              key: 'AIzaSyAn6btAVaCvejincnVsL-QCeDOghDMvulQ'
             }
           }
-        } catch (error) {
-          console.error(`Error fetching books for category ${category}:`, error)
-        }
+        );
+  
+        const existingTitles = new Set([title.toLowerCase().trim()]);
+  
+        authorBooks = (authorResponse.data?.items || [])
+          .filter(b => {
+            const bookTitle = b.volumeInfo?.title?.toLowerCase().trim();
+            if (existingTitles.has(bookTitle)) return false;
+            if (
+              bookTitle &&
+              b.volumeInfo?.authors?.length > 0 &&
+              b.volumeInfo?.imageLinks?.thumbnail
+            ) {
+              existingTitles.add(bookTitle);
+              return true;
+            }
+            return false;
+          })
+          .slice(0, 2);
       }
   
-      // Nehme die ersten 5 Bücher
-      const topBooks = booksTemp.slice(0, 5)
+      // 2. Drei Bücher aus der gleichen Kategorie
+      let categoryBooks = [];
+      if (categories[0]) {
+        const categoryResponse = await axios.get(
+          `https://www.googleapis.com/books/v1/volumes`, {
+            params: {
+              q: `subject:"${categories[0]}"`,
+              langRestrict: language,
+              maxResults: 40,
+              orderBy: 'relevance',
+              key: 'AIzaSyAn6btAVaCvejincnVsL-QCeDOghDMvulQ'
+            }
+          }
+        );
   
-      // Lade detaillierte Informationen
+        const existingTitles = new Set([
+          title.toLowerCase().trim(),
+          ...authorBooks.map(b => b.volumeInfo.title.toLowerCase().trim())
+        ]);
+  
+        let filteredBooks = (categoryResponse.data?.items || [])
+          .filter(b => {
+            const bookTitle = b.volumeInfo?.title?.toLowerCase().trim();
+            const ratings = b.volumeInfo?.ratingsCount || 0;
+            const avgRating = b.volumeInfo?.averageRating || 0;
+            
+            return (
+              !existingTitles.has(bookTitle) &&
+              !b.volumeInfo?.authors?.includes(authors[0]) &&
+              b.volumeInfo?.title &&
+              b.volumeInfo?.authors?.length > 0 &&
+              b.volumeInfo?.imageLinks?.thumbnail &&
+              ratings >= 3 && 
+              avgRating >= 3.5
+            );
+          })
+          .sort((a, b) => {
+            const ratingA = a.volumeInfo.averageRating || 0;
+            const ratingB = b.volumeInfo.averageRating || 0;
+            return ratingB - ratingA;
+          });
+  
+        if (filteredBooks.length < 3) {
+          filteredBooks = (categoryResponse.data?.items || [])
+            .filter(b => {
+              const bookTitle = b.volumeInfo?.title?.toLowerCase().trim();
+              return (
+                !existingTitles.has(bookTitle) &&
+                !b.volumeInfo?.authors?.includes(authors[0]) &&
+                b.volumeInfo?.title &&
+                b.volumeInfo?.authors?.length > 0 &&
+                b.volumeInfo?.imageLinks?.thumbnail
+              );
+            });
+        }
+  
+        categoryBooks = filteredBooks.slice(0, 3);
+      }
+  
+      let validBooks = [...authorBooks, ...categoryBooks];
+
+      // Enrichment Step: Für jedes Buch die beste Version finden
       const enrichedBooks = await Promise.all(
-        topBooks.map(async (book) => {
+        validBooks.map(async (book) => {
           try {
-            const detailRes = await axios.get(
-              `https://www.googleapis.com/books/v1/volumes/${book.id}?key=AIzaSyAn6btAVaCvejincnVsL-QCeDOghDMvulQ`
-            )
-            return detailRes.data
+            const enrichResponse = await axios.get(
+              `https://www.googleapis.com/books/v1/volumes`, {
+                params: {
+                  q: `intitle:"${book.volumeInfo.title}" inauthor:"${book.volumeInfo.authors[0]}"`,
+                  langRestrict: language,
+                  maxResults: 1,
+                  orderBy: 'relevance',
+                  key: 'AIzaSyAn6btAVaCvejincnVsL-QCeDOghDMvulQ'
+                }
+              }
+            );
+
+            // Wenn ein Ergebnis gefunden wurde und es ein Thumbnail hat,
+            // verwende das neue Ergebnis, sonst behalte das originale Buch
+            if (
+              enrichResponse.data?.items?.[0]?.volumeInfo?.imageLinks?.thumbnail &&
+              enrichResponse.data?.items?.[0]?.volumeInfo?.title
+            ) {
+              return enrichResponse.data.items[0];
+            }
+            return book;
           } catch (error) {
-            console.error(`Error fetching details for book: ${book.volumeInfo.title}`, error)
-            return book
+            console.error('Fehler beim Enrichment:', error);
+            return book; // Bei Fehler originales Buch behalten
           }
         })
-      )
+      );
   
-      setRecommendationsMap(prev => ({
-        ...prev,
-        [bookId]: enrichedBooks
-      }))
+      apiCache.set(cacheKey, enrichedBooks);
+      setRecommendations(enrichedBooks);
   
     } catch (error) {
-      console.error('Error in getRecommendationsForBook:', error)
+      console.error('Fehler beim Laden der Empfehlungen:', error);
+      setRecommendations([]);
     } finally {
-      setLoadingInModal(prev => ({...prev, [bookId]: false}))
+      setLoading(false);
     }
-  }
-  
+};
 
- 
+
+  useEffect(() => {
+    if (books[bookIndex]) {
+      getRecommendations(books[bookIndex]);
+    }
+  }, [bookIndex, books]);
 
   return (
     <>
@@ -174,102 +221,111 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           contentContainerStyle={{ paddingHorizontal: width * 0.04 }}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
-          pagingEnabled={true}
+          pagingEnabled
           bounces={false}
           snapToInterval={snapInterval}
           decelerationRate="fast"
-          getItemLayout={(data, index) => (
-            { length: itemWidth, offset: (itemWidth + itemMargin) * index, index }
-          )}
+          getItemLayout={(data, index) => ({
+            length: itemWidth,
+            offset: (itemWidth + itemMargin) * index,
+            index
+          })}
           initialScrollIndex={bookIndex}
-          renderItem={({ item, index }) => {
-            let title = item.volumeInfo.title
-            const thumbnail = `https://books.google.com/books/publisher/content/images/frontcover/${item.id}?fife=w400-h600&source=gbs_api`
-            let authors = item.volumeInfo.authors
-            const description = item.volumeInfo.description
-            const seiten = item.volumeInfo.pageCount
-
-            return (
-              <View
-                className={`bg-[#F2F2F2] rounded-t-2xl mt-20 pt-1 pb-4 relative`}
-                style={{
-                  width: itemWidth,
-                  marginLeft: index === 0 ? 0 : itemMargin / 2,
-                  marginRight: index === 5 ? 0 : itemMargin / 2,
-                }}
+          renderItem={({ item, index }) => (
+            <View
+              className="bg-[#F2F2F2] rounded-t-2xl mt-20 pt-1 pb-4 relative"
+              style={{
+                width: itemWidth,
+                marginLeft: index === 0 ? 0 : itemMargin / 2,
+                marginRight: index === books.length - 1 ? 0 : itemMargin / 2,
+              }}
+            >
+              <TouchableOpacity onPress={closeModal} className='absolute top-4 right-4 bg-[rgba(78,76,86,0.1)] rounded-full size-8 justify-center items-center z-10'>
+                <AntDesign name="close" size={18} color="black" />
+              </TouchableOpacity>
+              <ScrollView
+                ref={scrollViewRef}
+                showsVerticalScrollIndicator={false}
+                contentContainerClassName="pt-14 z-20"
               >
-                <ScrollView 
-                  ref={scrollViewRef}
-                  showsVerticalScrollIndicator={false} 
-                  contentContainerClassName='pt-14 z-20'
-                  onScroll={handleScroll}
-                  scrollEventThrottle={16}
-                >
-                  <View className='px-7'>
-                    <View style={{
-                      width: width * 0.6,
-                      height: width * 0.9,
-                      alignSelf: 'center',
-                      shadowColor: 'black',
-                      shadowOffset: { height: 10 },
-                      shadowOpacity: 0.8,
-                      shadowRadius: 20,
-                      elevation: 3,
-                    }}>
-                      <Image
-                        source={{ uri: thumbnail }}
-                        className='w-full h-full'
-                        resizeMode="stretch"
-                      />
-                    </View>
-                    <Text className="text-xl mt-5 font-bold text-center">{title}</Text>
-                    {authors.map((author, index) => (<Text className="text-center text-gray-600">{author}</Text>))}
-                    <View className="flex-col items-center gap-2 justify-center mt-3">
-                      <TouchableOpacity className="flex-row  gap-2 bg-black py-2 px-4 w-7/12 h-12 items-center justify-center rounded-full">
-                        <Text className="text-white font-bold text-lg">zur Leseliste</Text>
-                        <Feather name="bookmark" size={24} color="white" />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => editActiveBooks(user, item.id, item)}
-                        className="flex-row  gap-2 bg-[#2DA786] px-4 w-7/12 h-12 items-center justify-center rounded-full">
-                        <Text className="text-white font-bold text-lg">Lesen</Text>
-                        <Feather name="book-open" size={24} color="white" />
-                      </TouchableOpacity>
-                    </View>
-                    <Text className="text-center text-gray-600 text-lg font-semibold mt-2">Seiten: {seiten}</Text>
-                    <Text className="mt-5 text-lg text-center text-[#8C8C8C] border-b border-b-0.5 border-[#8C8C8C] pb-3">Psychologie 📚 | Geografie 🌍 | Wissen 💡</Text>
-                    <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">Beschreibung</Text>
-                    <Text className="text-gray-500 mt-2 mb-12 text-base">
-                      {description}
-                    </Text>
+                <View className="px-7">
+                  <View style={{
+                    width: width * 0.6,
+                    height: width * 0.9,
+                    alignSelf: 'center',
+                    shadowColor: 'black',
+                    shadowOffset: { height: 10 },
+                    shadowOpacity: 0.8,
+                    shadowRadius: 20,
+                    elevation: 3,
+                  }}>
+                    <Image
+                      source={{ uri: `https://books.google.com/books/publisher/content/images/frontcover/${item.id}?fife=w400-h600&source=gbs_api` }}
+                      className="w-full h-full"
+                      resizeMode="stretch"
+                    />
                   </View>
-                {/* Empfehlungssektion mit onLayout */}
-                <View 
-                    onLayout={(event) => measureRecommendationSection(item.id, event)}
-                    className='px-2 mt-3'
-                  >
+                  
+                  <Text className="text-xl mt-5 font-bold text-center">
+                    {item.volumeInfo.title}
+                  </Text>
+                  
+                  {item.volumeInfo.authors?.map((author, idx) => (
+                    <Text key={idx} className="text-center text-gray-600">
+                      {author}
+                    </Text>
+                  ))}
+
+                  <View className="flex-col items-center gap-2 justify-center mt-3">
+                    <TouchableOpacity className="flex-row gap-2 bg-black py-2 px-4 w-7/12 h-12 items-center justify-center rounded-full">
+                      <Text className="text-white font-bold text-lg">zur Leseliste</Text>
+                      <Feather name="bookmark" size={24} color="white" />
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      onPress={() => editActiveBooks(user, item.id, item)}
+                      className="flex-row gap-2 bg-[#2DA786] px-4 w-7/12 h-12 items-center justify-center rounded-full"
+                    >
+                      <Text className="text-white font-bold text-lg">Lesen</Text>
+                      <Feather name="book-open" size={24} color="white" />
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text className="text-center text-gray-600 text-lg font-semibold mt-2">
+                    Seiten: {item.volumeInfo.pageCount}
+                  </Text>
+
+                  <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">
+                    Beschreibung
+                  </Text>
+                  
+                  <Text className="text-gray-500 mt-2 mb-12 text-base">
+                    {item.volumeInfo.description}
+                  </Text>
+                </View>
+
+                {depth < 2 && (
+                  <View className="px-2 mt-3">
                     <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">
                       Ähnliche Bücher
                     </Text>
-                    {visibleSections[item.id] && (
-                      <Empfehlungen 
-                        books={recommendationsMap[item.id] || []} 
-                        loading={loadingInModal[item.id]} 
-                        openModal={openInnerModal} 
-                        inModal={true}
-                      />
-                    )}
+                    <Empfehlungen
+                      books={recommendations}
+                      loading={loading}
+                      openModal={openInnerModal}
+                      inModal={true}
+                    />
                   </View>
-                </ScrollView>
-              </View>
-            );
-          }}
+                )}
+              </ScrollView>
+            </View>
+          )}
         />
       </Animated.View>
 
-      {innerModalVisible && depth < MAX_DEPTH ? (
+      {innerModalVisible && depth < MAX_DEPTH && (
         <Modal
-          books={recommendationsMap[books[bookIndex]?.id] || []}
+          books={recommendations}
           closeModal={closeInnerModal}
           width={width}
           slideAnim={innerSlideAnim}
@@ -277,8 +333,9 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           bookIndex={innerBookIndex}
           depth={depth + 1}
         />
-      ) : null}
+      )}
     </>
-  )
-} 
-export default Modal
+  );
+};
+
+export default Modal;
