@@ -7,6 +7,7 @@ import { useModal } from './useModal';
 import { useGlobalContext } from '@/context/GlobalProvider';
 import editActiveBooks from '@/lib/editActiveBooks';
 import { AntDesign } from '@expo/vector-icons';
+import likeBook from '@/lib/buchMerken';
 
 // Cache für API-Anfragen
 const apiCache = new Map();
@@ -277,7 +278,9 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                   ))}
 
                   <View className="flex-col items-center gap-2 justify-center mt-3">
-                    <TouchableOpacity className="flex-row gap-2 bg-black py-2 px-4 w-7/12 h-12 items-center justify-center rounded-full">
+                    <TouchableOpacity 
+                    onPress={()=>likeBook(user, item.id, item)}
+                    className="flex-row gap-2 bg-black py-2 px-4 w-7/12 h-12 items-center justify-center rounded-full">
                       <Text className="text-white font-bold text-lg">zur Leseliste</Text>
                       <Feather name="bookmark" size={24} color="white" />
                     </TouchableOpacity>
