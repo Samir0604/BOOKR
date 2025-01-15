@@ -87,7 +87,7 @@ const SearchInput = ({ oldSearch }) => {
       return;
     }
     console.log(search);
-    router.push(`/search/${search}`)
+    router.push(`/suche/searchResults/${search}`);
   }
 
   return (

@@ -7,8 +7,6 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" options={{ title: "Default App" }}></Stack.Screen>
                 <Stack.Screen name="(auth)" options={{ title: "auth" }}></Stack.Screen>
-                <Stack.Screen name="search/[input]" options={{ title: "" }}></Stack.Screen>
-
             </Stack>
         </GlobalProvider>
     )

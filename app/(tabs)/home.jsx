@@ -48,8 +48,6 @@ const home = () => {
   }
 
 
-
-
   /* Books */
 
 

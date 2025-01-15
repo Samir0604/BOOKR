@@ -15,11 +15,10 @@ const STORAGE_KEYS = {
   KATEGORIE: 'searchResults_category_'
 };
 
-const API_KEY = process.env.API_KEY;
-
-
 const CACHE_DURATION = 60 * 60 * 1000; // 1 Stunde
 const MAX_CACHE_ITEMS = 50;
+
+const API_KEY = process.env.API_KEY;
 
 const SearchPage = () => {
   const { input } = useLocalSearchParams();
@@ -237,7 +236,7 @@ const SearchPage = () => {
 
   return (
    
-    <SafeAreaView className='flex-1 bg-white'>
+    <SafeAreaView edges={['top', 'left', 'right']} className='flex-1 bg-white'>
       <Animated.View 
         className='absolute top-0 left-0 right-0 z-50'
         style={{
@@ -336,14 +335,15 @@ const SearchPage = () => {
 
           return (
             <TouchableOpacity onPress={() => router.push({
-              pathname: `/bookpage/${item.id}`,
+              pathname: `/suche/bookpage/${item.id}`,
               params: {
                 title: item.volumeInfo.title,
                 author: item.volumeInfo.authors,
                 description: item.volumeInfo.description,
                 pageCount: item.volumeInfo.pageCount,
                 thumbnail: item.volumeInfo.imageLinks.thumbnail,
-                subject: item.subject
+                subject: item.subject,
+                book: item
               }
             })} className='w-full'>
               <View className='flex-row space-x-4'>
