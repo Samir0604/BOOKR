@@ -129,66 +129,83 @@ export default function BookProgress() {
 
 
           <EditProgressModal isOpen={showModal}>
-            <KeyboardAvoidingView 
-              behavior={Platform.OS === "ios" ? "padding" : "height"}
-              className="w-full"
-          >
-            <BlurView intensity={50} tint="light" className="overflow-hidden rounded-lg w-full">
-                <View className='p-6 w-full bg-white/50  flex flex-col'>
-                    <Text className='text-3xl font-semibold text-gray-800 mb-8'>Fortschritt anpassen</Text>
+  <TouchableOpacity 
+    activeOpacity={1}
+    onPress={() => setShowModal(false)}
+    style={{
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+    }}
+  >
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{
+        position: 'absolute',
+        bottom: 0,
+        width: '100%'
+      }}
+    >
+      <TouchableOpacity 
+        activeOpacity={1}
+        onPress={(e) => e.stopPropagation()}
+      >
+        <BlurView intensity={50} tint="light" className="overflow-hidden rounded-lg w-full">
+          <View className='p-6 w-full bg-white/50  flex flex-col'>
+            <Text className='text-3xl font-semibold text-gray-800 mb-8 self-center'>Fortschritt anpassen</Text>
 
-                    { /* Letzter Fortschritt - Vertikal */}
-                    <View className='mb-8'>
-                        <Text className='text-lg text-gray-600 mb-2'>Letzter Fortschritt</Text>
-                        <View className='flex flex-row items-center bg-[rgba(180,180,180,0.2)] p-4 rounded-lg'>
-                            <Text className='text-lg font-medium text-gray-800'>vor 2 Tagen</Text>
-                            <Text className='ml-2 text-lg'>⚡️</Text>
-                        </View>
-                    </View>
+            { /* Letzter Fortschritt - Vertikal */}
+            <View className='mb-10 flex-col gap-1 '>
+              <Text className='text-2xl text-black font-semibold'>Letzter Fortschritt</Text>
+              <Text className='text-lg font-medium text-gray-800'>09.01.2025<Text className='ml-2 text-lg'>⚡️</Text></Text>
+            </View>
 
-                    {/* Seitenzahl Eingabe - Vertikal */}
-                    <View className='mb-8'>
-                        <Text className='text-lg text-gray-600 mb-2'>Aktuelle Seite</Text>
-                        <View className='flex flex-row items-center justify-between'>
-                            <TextInput 
-                                className='bg-[rgba(180,180,180,0.2)] px-4 py-3 rounded-lg w-32 text-xl font-medium'
-                                keyboardType='numeric'
-                                placeholder='123'
-                                textAlign='center'
-                                style={{
-                                    textAlignVertical: 'center'
-                                }}
-                            />
-                        
-                            <View className='flex flex-row items-center bg-[rgba(180,180,180,0.2)] px-4 py-3 rounded-lg'>
-                                <Text className='text-lg text-gray-600 mr-2'>von</Text>
-                                <Text className='text-xl font-medium text-gray-800 mr-2'>203</Text>
-                                <TouchableOpacity>
-                                    <MaterialIcons name="edit" size={24} color="#666" />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-
-                    {/* Update Button */}
-                    <TouchableOpacity 
-                        className='w-full bg-[#2DA786] mt-auto p-4 rounded-lg flex items-center justify-center'
-                        onPress={() => setShowModal(false)}
-                    >
-                        <Text className='text-white font-semibold text-lg'>Fortschritt aktualisieren</Text>
-                    </TouchableOpacity>
-
-                    {/* Close Button */}
-                    <TouchableOpacity 
-                        className='absolute top-4 right-4'
-                        onPress={() => setShowModal(false)}
-                    >
-                        <MaterialIcons name="close" size={24} color="#666" />
-                    </TouchableOpacity>
+            {/* Seitenzahl Eingabe - Vertikal */}
+            <View className='mb-8'>
+              <Text className='text-2xl text-black mb-2 font-semibold'>Aktuelle Seite</Text>
+              <View className='flex flex-row items-center justify-between'>
+                <TextInput 
+                  className='bg-[rgba(180,180,180,0.2)] px-4 py-3 rounded-lg w-32 text-xl font-medium'
+                  keyboardType='numeric'
+                  placeholder='123'
+                  textAlign='center'
+                  style={{
+                    textAlignVertical: 'center'
+                  }}
+                />
+            
+                <View className='flex flex-row items-center bg-[rgba(180,180,180,0.2)] px-4 py-3 rounded-lg'>
+                  <Text className='text-lg text-gray-600 mr-2'>von</Text>
+                  <Text className='text-xl font-medium text-gray-800 mr-2'>203</Text>
+                  <TouchableOpacity>
+                    <MaterialIcons name="edit" size={24} color="#666" />
+                  </TouchableOpacity>
                 </View>
-            </BlurView>
-        </KeyboardAvoidingView>
-    </EditProgressModal>
+              </View>
+            </View>
+
+            {/* Update Button */}
+            <TouchableOpacity 
+              className='w-full bg-[#2DA786] mt-auto p-4 rounded-lg flex items-center justify-center'
+              onPress={() => setShowModal(false)}
+            >
+              <Text className='text-white font-semibold text-lg'>Fortschritt aktualisieren</Text>
+            </TouchableOpacity>
+
+            {/* Close Button */}
+            <TouchableOpacity 
+              className='absolute top-4 right-4'
+              onPress={() => setShowModal(false)}
+            >
+              <MaterialIcons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+        </BlurView>
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
+  </TouchableOpacity>
+</EditProgressModal>
+
 
 
 
