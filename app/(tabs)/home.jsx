@@ -21,6 +21,8 @@ import { useModal } from '@/components/useModal';
 
 const { width } = Dimensions.get('window');
 
+const API_KEY = process.env.API_KEY;
+
 const home = () => {
 
   const { user } = useGlobalContext()
@@ -131,6 +133,7 @@ const home = () => {
                 langRestrict: language,
                 maxResults: 1,
                 orderBy: 'relevance',
+                key: API_KEY 
               }
             }
           );
@@ -162,6 +165,7 @@ const home = () => {
                 maxResults: 40,
                 orderBy: 'relevance',
                 langRestrict: 'de',
+                key: API_KEY 
               }
             });
   

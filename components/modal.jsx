@@ -2,15 +2,22 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Animated, Image, FlatList, ScrollView, Dimensions } from 'react-native';
 import axios from 'axios';
 import Feather from '@expo/vector-icons/Feather';
+import { BlurView } from 'expo-blur';
+
+import { useGlobalContext } from '@/context/GlobalProvider';
+
+import { AntDesign } from '@expo/vector-icons';
+
 import Empfehlungen from './Empfehlungen';
 import { useModal } from './useModal';
-import { useGlobalContext } from '@/context/GlobalProvider';
-import editActiveBooks from '@/lib/editActiveBooks';
-import { AntDesign } from '@expo/vector-icons';
+
 import likeBook from '@/lib/buchMerken';
+import editActiveBooks from '@/lib/editActiveBooks';
 
 // Cache für API-Anfragen
 const apiCache = new Map();
+
+const API_KEY = process.env.API_KEY
 
 const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, first = false, depth = 0 }) => {
   const { user } = useGlobalContext();
@@ -67,7 +74,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
         const authorResponse = await axios.get(
           `https://www.googleapis.com/books/v1/volumes`, {
           params: {
-            q: `inauthor:"${authors[0]}" subject:"${subject}" subject:"${categories[0] || ''}"`,
+            q: `inauthor:"${authors[0]}" `,
             langRestrict: language,
             maxResults: 40,
             orderBy: 'relevance',
@@ -210,9 +217,23 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: first ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0)'
         }}
       >
+        {first && (
+          <BlurView
+            intensity={50}
+            tint="dark"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            }}
+          />
+        )}
+        
         <FlatList
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={{
@@ -220,7 +241,9 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           }}
           data={books}
           horizontal
-          contentContainerStyle={{ paddingHorizontal: width * 0.04 }}
+          contentContainerStyle={{ 
+            paddingHorizontal: width * 0.04,
+          }}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
           pagingEnabled
@@ -235,21 +258,46 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           initialScrollIndex={bookIndex}
           renderItem={({ item, index }) => (
             <View
-
-              className= "bg-[#F2F2F2] rounded-t-2xl mt-20 pt-1 pb-4 relative"
+              className="bg-[#F2F2F2] rounded-t-2xl mt-20 pt-1 pb-4 relative"
               style={{
                 width: itemWidth,
                 marginLeft: index === 0 ? 0 : itemMargin / 2,
                 marginRight: index === books.length - 1 ? 0 : itemMargin / 2,
+                shadowColor: '#000',
+                shadowOffset: {
+                  width: 0,
+                  height: 2,
+                },
+                shadowOpacity: 0.25,
+                shadowRadius: 3.84,
+                elevation: 5,
               }}
             >
-              <TouchableOpacity onPress={closeModal} className='absolute top-4 right-4 bg-[rgba(78,76,86,0.1)] rounded-full size-8 justify-center items-center z-10'>
+              <TouchableOpacity 
+                onPress={closeModal} 
+                className='absolute top-4 right-4 bg-[rgba(78,76,86,0.1)] rounded-full size-8 justify-center items-center z-10'
+                style={{
+                  shadowColor: '#000',
+                  shadowOffset: {
+                    width: 0,
+                    height: 1,
+                  },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 1.41,
+                  elevation: 2,
+                }}
+              >
                 <AntDesign name="close" size={18} color="black" />
               </TouchableOpacity>
+  
               <ScrollView
                 ref={scrollViewRef}
                 showsVerticalScrollIndicator={false}
-                contentContainerClassName="pt-14 z-20"
+                contentContainerClassName="pt-13 z-20"
+                style={{
+                  borderTopLeftRadius: 16,
+                  borderTopRightRadius: 16,
+                }}
               >
                 <View className="px-7">
                   <View style={{
