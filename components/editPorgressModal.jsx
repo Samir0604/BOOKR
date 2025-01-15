@@ -15,7 +15,7 @@ export default function EditProgressModal({isOpen, children}) {
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
       () => {
         // Verzögere das Ausblenden des Blurs leicht, damit das Modal Zeit hat sich zu positionieren
-        setTimeout(() => setShowKeyboardBlur(false), 247);
+        setTimeout(() => setShowKeyboardBlur(false), 252);
       }
     );
 
@@ -46,7 +46,8 @@ export default function EditProgressModal({isOpen, children}) {
       right: 0,
       height: 400,
       zIndex: -1,
-    }}
+      backgroundColor: 'rgba(255, 255, 255, 1)'
+        }}
   >
     <View className='p-6 w-full bg-white flex flex-col'>
       

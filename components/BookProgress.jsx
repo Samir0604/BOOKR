@@ -127,8 +127,7 @@ export default function BookProgress() {
 
 
 
-
-          <EditProgressModal isOpen={showModal}>
+<EditProgressModal isOpen={showModal}>
   <TouchableOpacity 
     activeOpacity={1}
     onPress={() => setShowModal(false)}
