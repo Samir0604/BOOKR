@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, Image, TouchableOpacity, Animated, Dimensions, LayoutAnimation, Platform, UIManager } from 'react-native'
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useLocalSearchParams, router } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGlobalContext } from '@/context/GlobalProvider';
@@ -9,8 +9,15 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
 
 import Empfehlungen from '@/components/Empfehlungen';
+import likeBook from '@/lib/buchMerken';
+import editActiveBooks from '@/lib/editActiveBooks';
+import useBookStore from '@/components/zustandBookHandling';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
+
+const API_KEY = process.env.API_KEY;
+
 
 
 const Bookpage = () => {
@@ -21,24 +28,129 @@ const Bookpage = () => {
     }
   }
 
-
   const {
     id,
-    title,
-    authors,
-    description,
-    pageCount,
-    thumbnail,
-    subject,
-    item
   } = useLocalSearchParams();
+  const selectedBook = useBookStore((state) => state.selectedBook);
+
+  const bookData = selectedBook
 
   const { user } = useGlobalContext();
   const scrollY = useRef(new Animated.Value(0)).current;
 
 
-
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+
+  const getBooks = async () => {
+    try {
+      setLoading(true);
+
+      // Hilfsfunktion zur Validierung eines Buches
+      const isValidBook = (book) => {
+        return (
+          book.volumeInfo?.title &&
+          book.volumeInfo?.authors?.length > 0 &&
+          book.volumeInfo?.imageLinks?.thumbnail &&
+          book.volumeInfo?.description &&
+          book.volumeInfo?.pageCount
+        );
+      };
+
+      // Enrichment Funktion
+      const enrichBook = async (book) => {
+        try {
+          const enrichResponse = await axios.get(
+            'https://www.googleapis.com/books/v1/volumes',
+            {
+              params: {
+                q: `intitle:"${book.volumeInfo.title}" inauthor:"${book.volumeInfo.authors[0]}"`,
+                langRestrict: 'de',
+                maxResults: 1,
+                orderBy: 'relevance',
+                key: API_KEY
+              }
+            }
+          );
+
+          if (
+            enrichResponse.data?.items?.[0] &&
+            isValidBook(enrichResponse.data.items[0])
+          ) {
+            return enrichResponse.data.items[0];
+          }
+          return book;
+        } catch (error) {
+          console.error('Enrichment error:', error);
+          return book;
+        }
+      };
+
+      if (bookData.volumeInfo.categories[0]) {
+        try {
+          const resCategory = await axios.get(
+            'https://www.googleapis.com/books/v1/volumes',
+            {
+              params: {
+                q: `subject:"${bookData.volumeInfo.categories[0]}"`,
+                langRestrict: 'de',
+                maxResults: 40,
+                orderBy: 'relevance',
+                key: API_KEY
+              }
+            }
+          );
+
+          if (resCategory.data?.items && resCategory.data.items.length > 0) {
+            // Filtere valide Bücher und überspringe das aktuelle Buch
+            const validBooks = resCategory.data.items
+              .filter(book => book.id !== id && isValidBook(book))
+              .slice(0, 5);
+
+            if (validBooks.length > 0) {
+              // Enrichment Prozess für jedes Buch
+              const enrichedBooks = await Promise.all(
+                validBooks.map(book => enrichBook(book))
+              );
+
+              setBooks(enrichedBooks);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching category books:', error);
+        }
+      }
+
+    } catch (error) {
+      console.error('Failed to fetch books:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+
+
+
+  useEffect(() => {
+    getBooks();
+    console.log(selectedBook);
+
+  }, [])
+
+  const scrollViewRef = useRef(null);
+
+  useEffect(() => {
+    // Reset scroll position and fetch new books when params change
+    scrollY.setValue(0);
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: 0, animated: false });
+    }
+    getBooks();
+  }, [id]); // Abhängigkeit von der Buch-ID
 
 
   return (
@@ -63,9 +175,10 @@ const Bookpage = () => {
               <TouchableOpacity onPress={() => { router.back() }}>
                 <AntDesign name="arrowleft" size={24} color="black" />
               </TouchableOpacity>
-              <Text className='text-lg font-medium'>{title?.length > 25 ? title.substring(0, 25) + "..." : title}</Text>
+              <Text className='text-lg font-medium'>{bookData.volumeInfo.title?.length > 25 ? bookData.volumeInfo.title.substring(0, 25) + "..." : bookData.volumeInfo.title}</Text>
               <View className='w-8' />
             </View>
+
           </SafeAreaView>
         </LinearGradient>
       </Animated.View>
@@ -88,6 +201,7 @@ const Bookpage = () => {
       </Animated.View>
 
       <Animated.ScrollView
+        ref={scrollViewRef}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: true }
@@ -114,18 +228,20 @@ const Bookpage = () => {
           </View>
 
           <Text className="text-xl mt-5 font-bold text-center">
-            {title}
+            {bookData.volumeInfo.title}
           </Text>
 
-          {authors?.map((author, id) => (
+
+          {bookData.volumeInfo.authors?.map((author, id) => (
             <Text key={id} className="text-center text-gray-600">
               {author}
             </Text>
           ))}
 
+
           <View className="flex-col items-center justify-center mt-3">
             <TouchableOpacity
-              onPress={() => likeBook(user, id, item)}
+              onPress={() => likeBook(user, id, bookData)}
               style={{
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 4 },
@@ -140,7 +256,7 @@ const Bookpage = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => editActiveBooks(user, id, item)}
+              onPress={() => editActiveBooks(user, id, bookData)}
               style={{
                 shadowColor: '#2DA786',
                 shadowOffset: { width: 0, height: 4 },
@@ -157,7 +273,7 @@ const Bookpage = () => {
           </View>
 
           <Text className="text-center text-gray-600 text-lg font-semibold mt-2">
-            Seiten: {pageCount}
+            Seiten: {bookData.volumeInfo.pageCount}
           </Text>
 
           <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">
@@ -165,48 +281,60 @@ const Bookpage = () => {
           </Text>
 
           <View>
-  <Text
-    className="text-gray-500 mt-2 text-justify"
-    style={{
-      opacity: showFullDescription ? 1 : 0.95,
-    }}
-  >
-    {description && (showFullDescription
-      ? description
-      : description?.substring(0, 500) + "..."
-    )}
-  </Text>
-  {description && description.length > 500 && !showFullDescription && (
-    <TouchableOpacity
-      onPress={() => {
-        LayoutAnimation.configureNext(
-          LayoutAnimation.create(
-            400,
-            LayoutAnimation.Types.easeInEaseOut,
-            LayoutAnimation.Properties.opacity
-          )
-        );
-        setShowFullDescription(true);
-      }}
-      className="mt-2 mb-2"
-    >
-      <View className="flex items-center justify-center">
-        <Text className="text-[#2DA786] font-bold text-base mt-2">
-          Mehr lesen
-        </Text>
-        <AntDesign
-          name="down"
-          size={16}
-          color="#2DA786"
-          style={{ marginTop: 4 }}
-        />
-      </View>
-    </TouchableOpacity>
-  )}
-  {description && (
-    <View className="mb-12" />
-  )}
-</View>
+            <Text
+              className="text-gray-500 mt-2 text-justify"
+              style={{
+                opacity: showFullDescription ? 1 : 0.95,
+              }}
+            >
+              {bookData.volumeInfo.description && (showFullDescription
+                ? bookData.volumeInfo.description
+                : bookData.volumeInfo.description?.substring(0, 500) + "..."
+              )}
+            </Text>
+            {bookData.volumeInfo.description && bookData.volumeInfo.description.length > 500 && !showFullDescription && (
+              <TouchableOpacity
+                onPress={() => {
+                  LayoutAnimation.configureNext(
+                    LayoutAnimation.create(
+                      400,
+                      LayoutAnimation.Types.easeInEaseOut,
+                      LayoutAnimation.Properties.opacity
+                    )
+                  );
+                  setShowFullDescription(true);
+                }}
+                className="mt-2 mb-2"
+              >
+                <View className="flex items-center justify-center">
+                  <Text className="text-[#2DA786] font-bold text-base mt-2">
+                    Mehr lesen
+                  </Text>
+                  <AntDesign
+                    name="down"
+                    size={16}
+                    color="#2DA786"
+                    style={{ marginTop: 4 }}
+                  />
+                </View>
+              </TouchableOpacity>
+            )}
+            {bookData.volumeInfo.description && (
+              <View className="mb-12" />
+            )}
+          </View>
+
+
+          <View className="px-2 mt-3 mb-10">
+            <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">
+              Ähnliche Bücher
+            </Text>
+            <Empfehlungen
+              books={books}
+              loading={loading}
+              newPage={true}
+            />
+          </View>
 
 
         </View>

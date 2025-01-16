@@ -8,6 +8,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import useBookStore from '@/components/zustandBookHandling';
+
 
 const STORAGE_KEYS = {
   TITLE: 'searchResults_title_',
@@ -27,6 +29,8 @@ const SearchPage = () => {
   const [loading, setLoading] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
 
+  const setSelectedBook = useBookStore((state) => state.setSelectedBook);
+
   const isValidBook = (book) => {
     return (
       book.volumeInfo?.title &&
@@ -40,10 +44,10 @@ const SearchPage = () => {
   const cleanupOldCache = async () => {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      const searchKeys = keys.filter(key => 
+      const searchKeys = keys.filter(key =>
         key.startsWith('searchResults_')
       );
-      
+
       for (const key of searchKeys) {
         const cached = await AsyncStorage.getItem(key);
         if (cached) {
@@ -61,10 +65,10 @@ const SearchPage = () => {
   const limitCacheSize = async () => {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      const searchKeys = keys.filter(key => 
+      const searchKeys = keys.filter(key =>
         key.startsWith('searchResults_')
       );
-      
+
       if (searchKeys.length > MAX_CACHE_ITEMS) {
         const toRemove = searchKeys.length - MAX_CACHE_ITEMS;
         for (let i = 0; i < toRemove; i++) {
@@ -80,11 +84,11 @@ const SearchPage = () => {
     try {
       const storageKey = `${STORAGE_KEYS[filterType.toUpperCase()]}_${searchInput}`;
       const cached = await AsyncStorage.getItem(storageKey);
-      
+
       if (cached) {
         const { data, timestamp } = JSON.parse(cached);
         const isExpired = Date.now() - timestamp > CACHE_DURATION;
-        
+
         if (!isExpired) {
           return data;
         }
@@ -113,7 +117,7 @@ const SearchPage = () => {
   const getBooks = async () => {
     try {
       setLoading(true);
-      
+
       // Prüfe Cache zuerst
       const cachedResults = await getCachedResults(filter, input);
       if (cachedResults) {
@@ -201,11 +205,11 @@ const SearchPage = () => {
               }
             })
           );
-    
+
           setBooks(enrichedBooks);
           await setCachedResults(filter, input, enrichedBooks);
         } else {
-         
+
           setBooks(validBooks);
           await setCachedResults(filter, input, validBooks);
         }
@@ -235,9 +239,9 @@ const SearchPage = () => {
   }, [filter]);
 
   return (
-   
+
     <SafeAreaView edges={['top', 'left', 'right']} className='flex-1 bg-white'>
-      <Animated.View 
+      <Animated.View
         className='absolute top-0 left-0 right-0 z-50'
         style={{
           opacity: scrollY.interpolate({
@@ -264,7 +268,7 @@ const SearchPage = () => {
         </LinearGradient>
       </Animated.View>
 
-      <Animated.View 
+      <Animated.View
         className='absolute top-0 left-0 z-50 p-5 pt-3'
         style={{
           opacity: scrollY.interpolate({
@@ -334,18 +338,15 @@ const SearchPage = () => {
           const categories = item.volumeInfo.categories;
 
           return (
-            <TouchableOpacity onPress={() => router.push({
-              pathname: `/suche/bookpage/${item.id}`,
-              params: {
-                title: item.volumeInfo.title,
-                author: item.volumeInfo.authors,
-                description: item.volumeInfo.description,
-                pageCount: item.volumeInfo.pageCount,
-                thumbnail: item.volumeInfo.imageLinks.thumbnail,
-                subject: item.subject,
-                book: item
-              }
-            })} className='w-full'>
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedBook(item);
+                  
+                router.push({
+                  pathname: `/suche/bookpage/${item.id}`
+                })
+              }}
+              className='w-full'>
               <View className='flex-row space-x-4'>
                 <Image
                   source={{ uri: thumbnail }}
