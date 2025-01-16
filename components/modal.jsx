@@ -233,7 +233,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
             }}
           />
         )}
-        
+
         <FlatList
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={{
@@ -241,7 +241,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           }}
           data={books}
           horizontal
-          contentContainerStyle={{ 
+          contentContainerStyle={{
             paddingHorizontal: width * 0.04,
           }}
           showsHorizontalScrollIndicator={false}
@@ -273,8 +273,8 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                 elevation: 5,
               }}
             >
-              <TouchableOpacity 
-                onPress={closeModal} 
+              <TouchableOpacity
+                onPress={closeModal}
                 className='absolute top-4 right-4 bg-[rgba(78,76,86,0.1)] rounded-full size-8 justify-center items-center z-10'
                 style={{
                   shadowColor: '#000',
@@ -289,11 +289,11 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
               >
                 <AntDesign name="close" size={18} color="black" />
               </TouchableOpacity>
-  
+
               <ScrollView
                 ref={scrollViewRef}
                 showsVerticalScrollIndicator={false}
-                contentContainerClassName="pt-13 z-20"
+                contentContainerClassName="pt-14 z-20"
                 style={{
                   borderTopLeftRadius: 16,
                   borderTopRightRadius: 16,
@@ -353,7 +353,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                     Beschreibung
                   </Text>
 
-                  <Text className="text-gray-500 mt-2 mb-12 text-base">
+                  <Text className="text-gray-500 mt-2 mb-12 text-justify">
                     {item.volumeInfo.description}
                   </Text>
                 </View>
@@ -364,11 +364,11 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                       Ähnliche Bücher
                     </Text>
                     <Empfehlungen
-                    books={recommendationsMap.get(index) || []}
-                    loading={loading && currentBookIndex === index}
-                    openModal={openInnerModal}
-                    inModal={true}
-                  />
+                      books={recommendationsMap.get(index) || []}
+                      loading={loading && currentBookIndex === index}
+                      openModal={openInnerModal}
+                      inModal={true}
+                    />
                   </View>
                 )}
               </ScrollView>
