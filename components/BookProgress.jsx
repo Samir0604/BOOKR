@@ -38,6 +38,9 @@ export default function BookProgress() {
     }
   }, [showModal, currentPage, totalPages]);
 
+
+
+
   async function handleSubmit() {
     // Logge die aktuellen lokalen Eingabewerte
     console.log("Local Current Page:", localCurrentPage);
@@ -56,8 +59,8 @@ export default function BookProgress() {
         console.log("user: ", user.$id, "active: ", activeBook.$id, "current: ", newCurrentPage, "total: ", newTotalPages);
         return;
       }
-
-
+      const updatedProgess = newTotalPages > 0 ? Math.floor((newCurrentPage / newTotalPages) * 100) : 0;
+      setProgress(updatedProgess)
       console.log("user: ", user.$id, "active: ", activeBook.$id, "current: ", newCurrentPage, "total: ", newTotalPages);
       const upgradedBook = await editBookProgress(user, activeBook.googleBooksId, newCurrentPage, newTotalPages);
   

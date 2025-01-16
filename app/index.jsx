@@ -25,6 +25,12 @@ export default function HomeScreen() {
 
 
 
+                <Text className="text-5xl text-blue-500 font-bold text-center">Account</Text>
+                <Link className="font-bold text-2xl" href="settings/konto">Konto lan</Link>
+
+
+
+
 
 
             </ScrollView>
