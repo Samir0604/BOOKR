@@ -19,6 +19,11 @@ const SettingsLayout = () => {
     >
 
         <Stack.Screen name='konto' options={{ title: "Konto Einstellungen" }} />
+        <Stack.Screen name='support' options={{ title: "Support" }} />
+        <Stack.Screen name='privacy' options={{ title: "Datenschutz", headerShown:false}} />
+        <Stack.Screen name='businessInfo' options={{ title: "Datenschutz", headerShown:false}} />
+
+
 
 
     </Stack>

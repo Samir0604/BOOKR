@@ -4,8 +4,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
     return (
-        <SafeAreaView className=" flex-1  ">
-            <ScrollView contentContainerClassName="flex-1 flex-col gap-4 items-center justify-center">
+        
+            <ScrollView contentContainerClassName="flex-1 flex-col gap-4 items-center justify-center ">
+                <SafeAreaView className="">
                 <Text className="text-5xl text-red-500 font-bold">AUTH</Text>
                 <Link className="font-bold text-2xl" href="(auth)/onboarding">Onboarding</Link>
                 <Link className="font-bold text-2xl" href="(auth)/login">Login</Link>
@@ -27,17 +28,23 @@ export default function HomeScreen() {
 
                 <Text className="text-5xl text-blue-500 font-bold text-center">Account</Text>
                 <Link className="font-bold text-2xl" href="settings/konto">Konto lan</Link>
+                <Link className="font-bold text-2xl" href="settings/support">Konto lan</Link>
+                <Link className="font-bold text-2xl" href="settings/privacy">Konto lan</Link>
+                <Link className="font-bold text-2xl" href="settings/businessInfo">Konto lan</Link>
 
 
 
 
 
 
+
+
+                </SafeAreaView>
             </ScrollView>
 
 
 
-        </SafeAreaView>
+        
 
     )
 }
