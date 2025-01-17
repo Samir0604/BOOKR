@@ -8,8 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import useBookStore from '@/components/zustandBookHandling';
-
+import useBookStore from '@/stores/zustandBookHandling';
 
 const STORAGE_KEYS = {
   TITLE: 'searchResults_title_',

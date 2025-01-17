@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { ScrollView, TouchableOpacity, View, Text, Image, ActivityIndicator } from 'react-native';
 
-import useBookStore from './zustandBookHandling';
+import useBookStore from '@/stores/zustandBookHandling';
 export default function Empfehlungen({ books, openModal, loading, inModal = false, newPage = false }) {
   const setSelectedBook = useBookStore((state) => state.setSelectedBook);
 
@@ -26,7 +26,7 @@ export default function Empfehlungen({ books, openModal, loading, inModal = fals
                 setSelectedBook(book);
                 
                 router.push({
-                  pathname: `/suche/bookpage/${book.id}`
+                  pathname: `/bookpage/${book.id}`
                 })
               }
             }}

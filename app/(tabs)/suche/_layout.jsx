@@ -12,7 +12,7 @@ export default function SearchLayout() {
         options={{ headerShown: false }}
       />
         <Stack.Screen 
-        name="bookpage/[id]" // bookpage
+        name="bookpage" // bookpage
         options={{ headerShown: false }}
       />
     </Stack>

@@ -8,47 +8,49 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import BookListingLib from '@/components/bookListingLib';
 import AddBookLib from '@/components/addBookLib';
 import getSavedBooks from '@/lib/getSavedBooks';
-
+import useBookStore from '@/stores/zustandBookHandling';
 export default function bibliothek() {
   const { user } = useGlobalContext();
   const [isLoading, setIsLoading] = useState(true)
-  const [activeBook, setActiveBook]= useState(null)
+  const [activeBook, setActiveBook] = useState(null)
   const [savedBooks, setSavedBooks] = useState(null)
-  
-  
-  const fetchBooks = async () => {
+
+  const shouldRefresh = useBookStore((state) => state.shouldRefresh);
+  const setShouldRefresh = useBookStore((state) => state.setShouldRefresh);
+
+
+
+
+  async function fetchBooks() {
     try {
-        const [activeBook, savedBooks] = await Promise.all([
-            getActiveBooks(user),
-            getSavedBooks(user)
-        ]);
+      const [activeBook, savedBooks] = await Promise.all([
+        getActiveBooks(user),
+        getSavedBooks(user)
+      ]);
 
-        if (activeBook) {
-            setActiveBook(activeBook);
-            console.log("active book in useState");
-        } else {
-            console.log("user hat kein Buch aktiv");
-        }
-
-        if (savedBooks) {
-            setSavedBooks(savedBooks);
-            console.log("saved books in useState");
-        } else {
-            console.log("user hat keine Bücher saved");
-            setSavedBooks([]);
-        }
-
-        } catch (error) {
-            console.log("error bei fetchen", error);
-            setSavedBooks([]);
-        } finally {
-            setIsLoading(false);
-        }
+      setActiveBook(activeBook || null);
+      setSavedBooks(savedBooks || []);
+    } catch (error) {
+      console.error('Error fetching books:', error);
+      setActiveBook(null);
+      setSavedBooks([]);
+    } finally {
+      setIsLoading(false);
+      setShouldRefresh(false); // Reset shouldRefresh after fetching data
     }
+  }
 
-useEffect(() => {
+  useEffect(() => {
     fetchBooks();
-}, [user])
+  }, [user]);
+
+  useEffect(() => {
+    if (shouldRefresh) {
+      fetchBooks();
+      console.log('sup nig');
+
+    }
+  }, [shouldRefresh]);
 
 
 
@@ -80,17 +82,17 @@ useEffect(() => {
 
           {activeBook
             ? <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false} 
-                  className="flex"
-              >
-                <View className="flex flex-row gap-5">
-                  <BookListingLib book={activeBook}/>
-                  <AddBookLib />
-                </View>
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="flex"
+            >
+              <View className="flex flex-row gap-5">
+                <BookListingLib book={activeBook} />
+                <AddBookLib />
+              </View>
 
-              </ScrollView>
-            
+            </ScrollView>
+
             : <AddBookLib />
 
           }
@@ -109,29 +111,29 @@ useEffect(() => {
 
 
           {savedBooks
-            ?<ScrollView
+            ? <ScrollView
               horizontal
-              showsHorizontalScrollIndicator={false} 
+              showsHorizontalScrollIndicator={false}
               className="flex"
             >
 
               <View className="flex flex-row gap-5">
-                {savedBooks.map((savedBook)=>{
-                  return(
-                    <BookListingLib book={savedBook}/>
-                        )
+                {savedBooks.map((savedBook, index) => {
+                  return (
+                    <BookListingLib key={index} book={savedBook} />
+                  )
                 })}
                 <AddBookLib />
               </View>
 
-             </ScrollView>
-            
+            </ScrollView>
+
             : <AddBookLib />
 
           }
 
 
-         
+
 
 
 

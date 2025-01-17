@@ -13,7 +13,7 @@ import { useModal } from './useModal';
 
 import likeBook from '@/lib/buchMerken';
 import editActiveBooks from '@/lib/editActiveBooks';
-
+import useBookStore from '@/stores/zustandBookHandling';
 // Cache für API-Anfragen
 const apiCache = new Map();
 
@@ -180,6 +180,19 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
   // Lade Empfehlungen wenn sich der Index ändert
   const [currentBookIndex, setCurrentBookIndex] = useState(bookIndex);
 
+  const setShouldRefresh = useBookStore((state) => state.setShouldRefresh);
+
+  // Modify your likeBook and editActiveBooks functions to trigger a refresh
+  const handleLikeBook = async (user, item) => {
+    await likeBook(user, item.id, item);
+    setShouldRefresh(true); // Trigger refresh in bibliothek
+  };
+
+  const handleEditActiveBooks = async (user, item) => {
+    await editActiveBooks(user, item.id, item);
+    setShouldRefresh(true); // Trigger refresh in bibliothek
+  };
+
   useEffect(() => {
     if (books[currentBookIndex]) {
       getRecommendations(books[currentBookIndex], currentBookIndex);
@@ -329,7 +342,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
 
                   <View className="flex-col items-center gap-2 justify-center mt-3">
                     <TouchableOpacity
-                      onPress={() => likeBook(user, item.id, item)}
+                      onPress={() => handleLikeBook(user, item)}
                       className="flex-row gap-2 bg-black py-2 px-4 w-7/12 h-12 items-center justify-center rounded-full"
                     >
                       <Text className="text-white font-bold text-lg">zur Leseliste</Text>
@@ -337,7 +350,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      onPress={() => editActiveBooks(user, item.id, item)}
+                      onPress={() => handleEditActiveBooks(user,item)}
                       className="flex-row gap-2 bg-[#2DA786] px-4 w-7/12 h-12 items-center justify-center rounded-full"
                     >
                       <Text className="text-white font-bold text-lg">Lesen</Text>

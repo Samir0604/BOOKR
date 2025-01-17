@@ -1,6 +1,6 @@
-import { View, Text, ScrollView, Image, TouchableOpacity, Animated, Dimensions, LayoutAnimation, Platform, UIManager } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
-import { useLocalSearchParams, router } from 'expo-router'
+import { View, Text, ScrollView, Image, TouchableOpacity, Animated, Dimensions, LayoutAnimation, Platform, UIManager } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGlobalContext } from '@/context/GlobalProvider';
 import { BlurView } from 'expo-blur';
@@ -11,62 +11,91 @@ import Feather from '@expo/vector-icons/Feather';
 import Empfehlungen from '@/components/Empfehlungen';
 import likeBook from '@/lib/buchMerken';
 import editActiveBooks from '@/lib/editActiveBooks';
-import useBookStore from '@/components/zustandBookHandling';
+import useBookStore from '@/stores/zustandBookHandling';
 import axios from 'axios';
+
 
 const { width } = Dimensions.get('window');
 
 const API_KEY = process.env.API_KEY;
 
-
+const normalizeBookData = (book) => {
+  return {
+    id: book.googleBooksId || book.id,
+    title: book.title || book.volumeInfo?.title,
+    authors: book.authors ? (typeof book.authors === 'string' ? book.authors.split(', ') : book.authors) : book.volumeInfo?.authors,
+    categories: book.categories ? (typeof book.categories === 'string' ? book.categories.split(', ') : book.categories) : book.volumeInfo?.categories || [],
+    description: book.description || book.volumeInfo?.description,
+    pageCount: book.pageCount || book.volumeInfo?.pageCount,
+  };
+};
 
 const Bookpage = () => {
-
   if (Platform.OS === 'android') {
     if (UIManager.setLayoutAnimationEnabledExperimental) {
       UIManager.setLayoutAnimationEnabledExperimental(true);
     }
   }
 
-  const {
-    id,
-  } = useLocalSearchParams();
   const selectedBook = useBookStore((state) => state.selectedBook);
+  const setShouldRefresh = useBookStore((state) => state.setShouldRefresh);
+  const removeLastBook = useBookStore((state) => state.removeLastBook);
 
-  const bookData = selectedBook
-
+  const { id } = useLocalSearchParams();
+  
+  const bookData = normalizeBookData(selectedBook);
   const { user } = useGlobalContext();
   const scrollY = useRef(new Animated.Value(0)).current;
-
 
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const handleBack = () => {
+    removeLastBook();
+    router.back();
+  };
+
+  const handleLikeBook = async () => {
+    try {
+      await likeBook(user, bookData.id, selectedBook);
+      setShouldRefresh(true);
+    } catch (error) {
+      console.error('Error liking book:', error);
+    }
+  };
+
+  const handleEditActiveBooks = async () => {
+    try {
+      await editActiveBooks(user, bookData.id, selectedBook);
+      setShouldRefresh(true);
+    } catch (error) {
+      console.error('Error editing active books:', error);
+    }
+  };
 
   const getBooks = async () => {
     try {
       setLoading(true);
 
-      // Hilfsfunktion zur Validierung eines Buches
       const isValidBook = (book) => {
+        const info = book.volumeInfo || book;
         return (
-          book.volumeInfo?.title &&
-          book.volumeInfo?.authors?.length > 0 &&
-          book.volumeInfo?.imageLinks?.thumbnail &&
-          book.volumeInfo?.description &&
-          book.volumeInfo?.pageCount
+          info.title &&
+          info.authors?.length > 0 &&
+          info.imageLinks?.thumbnail &&
+          info.description &&
+          info.pageCount
         );
       };
 
-      // Enrichment Funktion
       const enrichBook = async (book) => {
         try {
           const enrichResponse = await axios.get(
             'https://www.googleapis.com/books/v1/volumes',
             {
               params: {
-                q: `intitle:"${book.volumeInfo.title}" inauthor:"${book.volumeInfo.authors[0]}"`,
+                q: `intitle:"${book.volumeInfo?.title || book.title}" inauthor:"${book.volumeInfo?.authors?.[0] || book.authors[0]}"`,
                 langRestrict: 'de',
                 maxResults: 1,
                 orderBy: 'relevance',
@@ -88,13 +117,13 @@ const Bookpage = () => {
         }
       };
 
-      if (bookData.volumeInfo.categories[0]) {
+      if (bookData.categories?.[0]) {
         try {
           const resCategory = await axios.get(
             'https://www.googleapis.com/books/v1/volumes',
             {
               params: {
-                q: `subject:"${bookData.volumeInfo.categories[0]}"`,
+                q: `subject:"${bookData.categories[0]}"`,
                 langRestrict: 'de',
                 maxResults: 40,
                 orderBy: 'relevance',
@@ -104,13 +133,11 @@ const Bookpage = () => {
           );
 
           if (resCategory.data?.items && resCategory.data.items.length > 0) {
-            // Filtere valide Bücher und überspringe das aktuelle Buch
             const validBooks = resCategory.data.items
-              .filter(book => book.id !== id && isValidBook(book))
+              .filter(book => book.id !== bookData.id && isValidBook(book))
               .slice(0, 5);
 
             if (validBooks.length > 0) {
-              // Enrichment Prozess für jedes Buch
               const enrichedBooks = await Promise.all(
                 validBooks.map(book => enrichBook(book))
               );
@@ -130,28 +157,9 @@ const Bookpage = () => {
     }
   };
 
-
-
-
-
-
   useEffect(() => {
     getBooks();
-    console.log(selectedBook);
-
-  }, [])
-
-  const scrollViewRef = useRef(null);
-
-  useEffect(() => {
-    // Reset scroll position and fetch new books when params change
-    scrollY.setValue(0);
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({ y: 0, animated: false });
-    }
-    getBooks();
-  }, [id]); // Abhängigkeit von der Buch-ID
-
+  }, []);
 
   return (
     <SafeAreaView edges={['left', 'right']} className='flex-1 bg-white'>
@@ -159,8 +167,8 @@ const Bookpage = () => {
         className='absolute top-0 left-0 right-0 z-50'
         style={{
           opacity: scrollY.interpolate({
-            inputRange: [width * 0.4, width * 0.6, width * 0.7, width * 0.8, width * 0.94 + 60],  // Start ab Bildschirmmitte
-            outputRange: [0, 0.1, 0.3, 0.6, 1],  // Sehr graduelle Erhöhung
+            inputRange: [width * 0.4, width * 0.6, width * 0.7, width * 0.8, width * 0.94 + 60],
+            outputRange: [0, 0.1, 0.3, 0.6, 1],
             extrapolate: 'clamp',
           }),
         }}
@@ -172,13 +180,14 @@ const Bookpage = () => {
         >
           <SafeAreaView>
             <View className='flex-row items-center justify-between px-5 mt-3 h-6'>
-              <TouchableOpacity onPress={() => { router.back() }}>
+              <TouchableOpacity onPress={() => { handleBack() }}>
                 <AntDesign name="arrowleft" size={24} color="black" />
               </TouchableOpacity>
-              <Text className='text-lg font-medium'>{bookData.volumeInfo.title?.length > 25 ? bookData.volumeInfo.title.substring(0, 25) + "..." : bookData.volumeInfo.title}</Text>
+              <Text className='text-lg font-medium'>
+                {bookData.title?.length > 25 ? bookData.title.substring(0, 25) + "..." : bookData.title}
+              </Text>
               <View className='w-8' />
             </View>
-
           </SafeAreaView>
         </LinearGradient>
       </Animated.View>
@@ -188,20 +197,19 @@ const Bookpage = () => {
         style={{
           opacity: scrollY.interpolate({
             inputRange: [width * 0.4, width * 0.6, width * 0.7, width * 0.8, width * 0.94 + 60],
-            outputRange: [1, 0.9, 0.6, 0.3, 0],  // Entsprechend angepasst
+            outputRange: [1, 0.9, 0.6, 0.3, 0],
             extrapolate: 'clamp',
           }),
         }}
       >
         <SafeAreaView>
-          <TouchableOpacity onPress={() => { router.back() }}>
+          <TouchableOpacity onPress={() => { handleBack() }}>
             <AntDesign name="arrowleft" size={24} color="black" />
           </TouchableOpacity>
         </SafeAreaView>
       </Animated.View>
 
       <Animated.ScrollView
-        ref={scrollViewRef}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: true }
@@ -211,37 +219,35 @@ const Bookpage = () => {
       >
         <View>
           <View style={{
-            width: width * 0.6,    // 60% der Bildschirmbreite
-            height: width * 0.94,   // 94% der Bildschirmbreite
+            width: width * 0.6,
+            height: width * 0.94,
             alignSelf: 'center',
             shadowColor: 'black',
             shadowOffset: { height: 10 },
             shadowOpacity: 0.8,
             shadowRadius: 20,
             elevation: 3,
-          }} >
+          }}>
             <Image
-              source={{ uri: `https://books.google.com/books/publisher/content/images/frontcover/${id}?fife=w400-h600&source=gbs_api` }}
+              source={{ uri: `https://books.google.com/books/publisher/content/images/frontcover/${bookData.id}?fife=w400-h600&source=gbs_api` }}
               className="w-full h-full"
               resizeMode="stretch"
             />
           </View>
 
           <Text className="text-xl mt-5 font-bold text-center">
-            {bookData.volumeInfo.title}
+            {bookData.title}
           </Text>
 
-
-          {bookData.volumeInfo.authors?.map((author, id) => (
-            <Text key={id} className="text-center text-gray-600">
+          {bookData.authors?.map((author, idx) => (
+            <Text key={idx} className="text-center text-gray-600">
               {author}
             </Text>
           ))}
 
-
           <View className="flex-col items-center justify-center mt-3">
             <TouchableOpacity
-              onPress={() => likeBook(user, id, bookData)}
+              onPress={handleLikeBook}
               style={{
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 4 },
@@ -256,7 +262,7 @@ const Bookpage = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => editActiveBooks(user, id, bookData)}
+              onPress={handleEditActiveBooks}
               style={{
                 shadowColor: '#2DA786',
                 shadowOffset: { width: 0, height: 4 },
@@ -269,11 +275,10 @@ const Bookpage = () => {
               <Text className="text-white font-bold text-lg">Lesen</Text>
               <Feather name="book-open" size={24} color="white" />
             </TouchableOpacity>
-
           </View>
 
           <Text className="text-center text-gray-600 text-lg font-semibold mt-2">
-            Seiten: {bookData.volumeInfo.pageCount}
+            Seiten: {bookData.pageCount}
           </Text>
 
           <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">
@@ -287,12 +292,12 @@ const Bookpage = () => {
                 opacity: showFullDescription ? 1 : 0.95,
               }}
             >
-              {bookData.volumeInfo.description && (showFullDescription
-                ? bookData.volumeInfo.description
-                : bookData.volumeInfo.description?.substring(0, 500) + "..."
+              {bookData.description && (showFullDescription
+                ? bookData.description
+                : bookData.description?.substring(0, 500) + "..."
               )}
             </Text>
-            {bookData.volumeInfo.description && bookData.volumeInfo.description.length > 500 && !showFullDescription && (
+            {bookData.description && bookData.description.length > 500 && !showFullDescription && (
               <TouchableOpacity
                 onPress={() => {
                   LayoutAnimation.configureNext(
@@ -319,11 +324,10 @@ const Bookpage = () => {
                 </View>
               </TouchableOpacity>
             )}
-            {bookData.volumeInfo.description && (
+            {bookData.description && (
               <View className="mb-12" />
             )}
           </View>
-
 
           <View className="px-2 mt-3 mb-10">
             <Text className="mt-5 text-[#8C8C8C] text-3xl font-medium text-center">
@@ -335,8 +339,6 @@ const Bookpage = () => {
               newPage={true}
             />
           </View>
-
-
         </View>
       </Animated.ScrollView>
     </SafeAreaView>
