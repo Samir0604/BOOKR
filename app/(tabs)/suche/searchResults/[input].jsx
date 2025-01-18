@@ -342,7 +342,7 @@ const SearchPage = () => {
                 setSelectedBook(item);
                   
                 router.push({
-                  pathname: `/suche/bookpage/${item.id}`
+                  pathname: `/bookpage/${item.id}`
                 })
               }}
               className='w-full'>

@@ -3,15 +3,19 @@ import { create } from 'zustand'
 const useBookStore = create((set) => ({
   selectedBook: null,
   shouldRefresh: false,
+  shouldRefreshLikes: false,
   bookHistory: [], // Neue Historie
-  
+
   setSelectedBook: (book) => set((state) => ({
     selectedBook: book,
     bookHistory: [...state.bookHistory, book] // Füge neues Buch zur Historie hinzu
   })),
-  
+
   setShouldRefresh: (value) => set({ shouldRefresh: value }),
-  
+  setShouldRefreshLikes: (value) => set({ shouldRefreshLikes: value }),
+
+
+
   removeLastBook: () => set((state) => {
     const newHistory = state.bookHistory.slice(0, -1); // Entferne letztes Buch
     return {

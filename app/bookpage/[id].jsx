@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Image, TouchableOpacity, Animated, Dimensions, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, Animated, Dimensions, LayoutAnimation, Platform, UIManager, ActivityIndicator } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,12 +7,16 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
+import Ionicons from '@expo/vector-icons/Ionicons';
+
 
 import Empfehlungen from '@/components/Empfehlungen';
 import likeBook from '@/lib/buchMerken';
 import editActiveBooks from '@/lib/editActiveBooks';
 import useBookStore from '@/stores/zustandBookHandling';
 import axios from 'axios';
+import getSavedBooks from '@/lib/getSavedBooks';
+import getActiveBooks from '@/lib/getActiveBooks';
 
 
 const { width } = Dimensions.get('window');
@@ -26,7 +30,7 @@ const normalizeBookData = (book) => {
     authors: book.authors ? (typeof book.authors === 'string' ? book.authors.split(', ') : book.authors) : book.volumeInfo?.authors,
     categories: book.categories ? (typeof book.categories === 'string' ? book.categories.split(', ') : book.categories) : book.volumeInfo?.categories || [],
     description: book.description || book.volumeInfo?.description,
-    pageCount: book.pageCount || book.volumeInfo?.pageCount,
+    pageCount: book.pages || book.volumeInfo?.pageCount,
   };
 };
 
@@ -39,17 +43,39 @@ const Bookpage = () => {
 
   const selectedBook = useBookStore((state) => state.selectedBook);
   const setShouldRefresh = useBookStore((state) => state.setShouldRefresh);
+  const setShouldRefreshLikes = useBookStore((state) => state.setShouldRefreshLikes);
   const removeLastBook = useBookStore((state) => state.removeLastBook);
 
   const { id } = useLocalSearchParams();
-  
+
   const bookData = normalizeBookData(selectedBook);
-  const { user } = useGlobalContext();
+  const { user, updateUser } = useGlobalContext();
   const scrollY = useRef(new Animated.Value(0)).current;
 
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+
+
+  const fetchData = async () => {
+    try {
+      const [likedStatus, activeStatus] = await Promise.all([
+        getSavedBooks(user, bookData.id),
+        getActiveBooks(user, bookData.id)
+      ]);
+
+      setIsLiked(likedStatus);
+      setIsActive(activeStatus);
+      setIsDataLoaded(true);
+    } catch (error) {
+      console.error(error);
+      setIsDataLoaded(true); // Setzen Sie es auch im Fehlerfall auf true
+    }
+  };
 
   const handleBack = () => {
     removeLastBook();
@@ -58,16 +84,22 @@ const Bookpage = () => {
 
   const handleLikeBook = async () => {
     try {
+      setIsLiked(!isLiked);
       await likeBook(user, bookData.id, selectedBook);
+      await updateUser(); // Aktualisiere den User
+      setShouldRefreshLikes(true);
       setShouldRefresh(true);
     } catch (error) {
+      setIsLiked(!isLiked); // Revert on error
       console.error('Error liking book:', error);
     }
   };
-
   const handleEditActiveBooks = async () => {
     try {
+      setIsActive(!isActive);
       await editActiveBooks(user, bookData.id, selectedBook);
+      await updateUser()
+      setShouldRefreshLikes(true);
       setShouldRefresh(true);
     } catch (error) {
       console.error('Error editing active books:', error);
@@ -159,6 +191,7 @@ const Bookpage = () => {
 
   useEffect(() => {
     getBooks();
+    fetchData()
   }, []);
 
   return (
@@ -248,6 +281,7 @@ const Bookpage = () => {
           <View className="flex-col items-center justify-center mt-3">
             <TouchableOpacity
               onPress={handleLikeBook}
+              disabled={!isDataLoaded}
               style={{
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 4 },
@@ -257,12 +291,22 @@ const Bookpage = () => {
               }}
               className="flex-row gap-2 bg-black px-4 w-8/12 h-14 items-center justify-center rounded-full mb-3"
             >
-              <Text className="text-white font-bold text-lg">zur Leseliste</Text>
-              <Feather name="bookmark" size={24} color="white" />
+              {isDataLoaded ? (
+                <>
+                  <Text className="text-white font-bold text-lg">zur Leseliste</Text>
+                  {isLiked ?
+                    <Ionicons name="bookmark" size={24} color="white" /> :
+                    <Ionicons name="bookmark-outline" size={24} color="white" />
+                  }
+                </>
+              ) : (
+                <ActivityIndicator color="white" />
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={handleEditActiveBooks}
+              disabled={!isDataLoaded}
               style={{
                 shadowColor: '#2DA786',
                 shadowOffset: { width: 0, height: 4 },
@@ -272,8 +316,19 @@ const Bookpage = () => {
               }}
               className="flex-row gap-2 bg-[#2DA786] px-4 w-8/12 h-14 items-center justify-center rounded-full"
             >
-              <Text className="text-white font-bold text-lg">Lesen</Text>
-              <Feather name="book-open" size={24} color="white" />
+              {isDataLoaded ? (
+                <>
+                  <Text className="text-white font-bold text-lg">
+                    {isActive ? 'Am Lesen...' : 'Lesen'}
+                  </Text>
+                  {isActive ?
+                    <Feather name="book-open" size={24} color="white" /> :
+                    <Feather name="book" size={24} color="white" />
+                  }
+                </>
+              ) : (
+                <ActivityIndicator color="white" />
+              )}
             </TouchableOpacity>
           </View>
 
@@ -343,6 +398,7 @@ const Bookpage = () => {
       </Animated.ScrollView>
     </SafeAreaView>
   );
+
 }
 
 export default Bookpage;

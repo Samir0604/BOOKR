@@ -6,7 +6,7 @@ import { BlurView } from 'expo-blur';
 
 import { useGlobalContext } from '@/context/GlobalProvider';
 
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 
 import Empfehlungen from './Empfehlungen';
 import { useModal } from './useModal';
@@ -19,7 +19,10 @@ const apiCache = new Map();
 
 const API_KEY = process.env.API_KEY
 
-const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, first = false, depth = 0 }) => {
+const Modal = ({ books, closeModal, width, slideAnim, likes, setLikes, actives, setActives, scaleAnim, bookIndex, first = false, depth = 0 }) => {
+ 
+
+
   const { user } = useGlobalContext();
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -41,6 +44,8 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
   const scrollViewRef = useRef(null);
 
   const [recommendationsMap, setRecommendationsMap] = useState(new Map());
+
+
 
   const getRecommendations = async (book, currentIndex) => {
     if (!book) return;
@@ -182,13 +187,47 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
 
   const setShouldRefresh = useBookStore((state) => state.setShouldRefresh);
 
-  // Modify your likeBook and editActiveBooks functions to trigger a refresh
+
+
+
+  // Initial Setup der Like-States
+
+  // Modifizierte handleLikeBook Funktion
   const handleLikeBook = async (user, item) => {
-    await likeBook(user, item.id, item);
-    setShouldRefresh(true); // Trigger refresh in bibliothek
+    try {
+      const isCurrentlyLiked = likes.includes(item.id);
+
+      // Optimistic update
+      if (isCurrentlyLiked) {
+        // Remove from likes
+        setLikes(prevLikes => prevLikes.filter(id => id !== item.id));
+      } else {
+        // Add to likes
+        setLikes(prevLikes => [...prevLikes, item.id]);
+      }
+
+      await likeBook(user, item.id, item);
+      setShouldRefresh(true);
+    } catch (error) {
+      // Revert on error
+      if (isCurrentlyLiked) {
+        setLikes(prevLikes => [...prevLikes, item.id]);
+      } else {
+        setLikes(prevLikes => prevLikes.filter(id => id !== item.id));
+      }
+      console.error('Error liking book:', error);
+    }
   };
 
   const handleEditActiveBooks = async (user, item) => {
+    const isCurrentlyActive = actives.includes(item.id)
+    if (isCurrentlyActive) {
+      // Remove from likes
+      setActives(prevActives => prevActives.filter(id => id !== item.id));
+    } else {
+      // Add to likes
+      setActives(prevActives => [...prevActives, item.id]);
+    }
     await editActiveBooks(user, item.id, item);
     setShouldRefresh(true); // Trigger refresh in bibliothek
   };
@@ -269,8 +308,8 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
             index
           })}
           initialScrollIndex={bookIndex}
-          renderItem={({ item, index }) => (
-            <View
+          renderItem={({ item, index }) => {
+            return <View
               className="bg-[#F2F2F2] rounded-t-2xl mt-20 pt-1 pb-4 relative"
               style={{
                 width: itemWidth,
@@ -346,15 +385,23 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                       className="flex-row gap-2 bg-black py-2 px-4 w-7/12 h-12 items-center justify-center rounded-full"
                     >
                       <Text className="text-white font-bold text-lg">zur Leseliste</Text>
-                      <Feather name="bookmark" size={24} color="white" />
+                      {likes.includes(item.id) ?
+                        <Ionicons name="bookmark" size={24} color="white" /> :
+                        <Ionicons name="bookmark-outline" size={24} color="white" />
+                      }
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      onPress={() => handleEditActiveBooks(user,item)}
+                      onPress={() => handleEditActiveBooks(user, item)}
                       className="flex-row gap-2 bg-[#2DA786] px-4 w-7/12 h-12 items-center justify-center rounded-full"
                     >
-                      <Text className="text-white font-bold text-lg">Lesen</Text>
-                      <Feather name="book-open" size={24} color="white" />
+                    <Text className="text-white font-bold text-lg">
+                    {actives.includes(item.id) ? 'Am Lesen...' : 'Lesen'}
+                  </Text>
+                  {actives.includes(item.id) ?
+                    <Feather name="book-open" size={24} color="white" /> :
+                    <Feather name="book" size={24} color="white" />
+                  }
                     </TouchableOpacity>
                   </View>
 
@@ -386,7 +433,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                 )}
               </ScrollView>
             </View>
-          )}
+          }}
         />
       </Animated.View>
 
@@ -399,6 +446,8 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           scaleAnim={innerScaleAnim}
           bookIndex={innerBookIndex}
           depth={depth + 1}
+          likes={likes}
+          setLikes={setLikes}
         />
       )}
     </>
