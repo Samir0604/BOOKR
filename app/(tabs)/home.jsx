@@ -25,16 +25,20 @@ const API_KEY = process.env.API_KEY;
 
 const home = () => {
   const { user } = useGlobalContext();
-  const shouldRefreshLikes = useBookStore((state) => state.shouldRefreshLikes);
-  const setShouldRefreshLikes = useBookStore((state) => state.setShouldRefreshLikes);
-  
+
+  const refreshHomeLikes = useBookStore((state) => state.refreshHomeLikes);
+  const setRefreshHomeLikes = useBookStore((state) => state.setRefreshHomeLikes);
+  const refreshHomeActives = useBookStore((state) => state.refreshHomeActives);
+  const setRefreshHomeActives = useBookStore((state) => state.setRefreshHomeActives);
+
 
   const [likes, setLikes] = useState([]);
   const [actives, setActives] = useState([]);
+
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  function getRandomCategories() {
+  const getRandomCategories = () => {
     let tempArray = [...user.liked_categories];
     let result = [];
 
@@ -52,27 +56,6 @@ const home = () => {
 
     return result;
   }
-
-  const getLiked = async () => {
-    try {
-      const savedBooks = user.savedBooks.map(book => book.googleBooksId);
-      
-      setLikes(savedBooks);
-    } catch (error) {
-      console.error('Error getting liked books:', error);
-    }
-  };
-
-  const getActive = async () => {
-    try {
-      const activeBooks = user.activeBooks.map(book => book.googleBooksId);
-      console.log(activeBooks);
-      
-      setActives(activeBooks);
-    } catch (error) {
-      console.error('Error getting liked books:', error);
-    }
-  };
 
   const shouldUpdateBooks = async () => {
     try {
@@ -169,7 +152,7 @@ const home = () => {
             const response = await axios.get('https://www.googleapis.com/books/v1/volumes', {
               params: {
                 q: `subject:${category}`,
-                maxResults: 40,
+                maxResults: 10,
                 orderBy: 'relevance',
                 langRestrict: 'de',
                 key: API_KEY
@@ -216,25 +199,26 @@ const home = () => {
     }
   }
 
+  const getLiked = async () => {
+    try {
+      const savedBooks = user.savedBooks.map(book => book.googleBooksId);
 
-
-
-  // Refresh handling
-  useEffect(() => {
-    if (shouldRefreshLikes) {
-      getLiked();
-      getActive()
-      
-      setShouldRefreshLikes(false);
+      setLikes(savedBooks);
+    } catch (error) {
+      console.error('Error getting liked books:', error);
     }
-  }, [shouldRefreshLikes]);
+  };
 
-  // Initial load
-  useEffect(() => {
-    getBooks();
-    getActive()
-    getLiked();
-  }, [user]);
+  const getActive = async () => {
+    try {
+      const activeBooks = user.activeBooks.map(book => book.googleBooksId);
+
+      setActives(activeBooks);
+    } catch (error) {
+      console.error('Error getting liked books:', error);
+    }
+  };
+
 
   const {
     modalVisible,
@@ -245,7 +229,32 @@ const home = () => {
     closeModal
   } = useModal();
 
-  // ... rest of the code (return statement)
+
+  // Refresh handling likes
+  useEffect(() => {
+    if (refreshHomeLikes) {
+      getLiked();
+
+      setRefreshHomeLikes(false);
+    }
+  }, [refreshHomeLikes]);
+  // Refresh handling actives
+  useEffect(() => {
+    if (refreshHomeActives) {
+
+      getActive()
+
+      setRefreshHomeActives(false);
+    }
+  }, [refreshHomeActives]);
+
+  // Initial load
+  useEffect(() => {
+    getBooks();
+    getActive()
+    getLiked();
+  }, [user]);
+
 
   return (
     <>

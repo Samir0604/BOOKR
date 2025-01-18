@@ -15,9 +15,9 @@ export default function bibliothek() {
   const [activeBook, setActiveBook] = useState(null)
   const [savedBooks, setSavedBooks] = useState(null)
 
-  const shouldRefresh = useBookStore((state) => state.shouldRefresh);
-  
-  const setShouldRefresh = useBookStore((state) => state.setShouldRefresh);
+  const refreshBib = useBookStore((state) => state.refreshBib);
+
+  const setRefreshBib = useBookStore((state) => state.setRefreshBib);
 
 
 
@@ -36,7 +36,7 @@ export default function bibliothek() {
       setSavedBooks([]);
     } finally {
       setIsLoading(false);
-      setShouldRefresh(false); // Reset shouldRefresh after fetching data
+
 
     }
   }
@@ -46,11 +46,11 @@ export default function bibliothek() {
   }, [user]);
 
   useEffect(() => {
-    if (shouldRefresh ) {
+    if (refreshBib) {
       fetchBooks();
-
+      setRefreshBib(false);// Reset shouldRefresh after fetching data
     }
-  }, [shouldRefresh]);
+  }, [refreshBib]);
 
 
 

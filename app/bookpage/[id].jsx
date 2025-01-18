@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Image, TouchableOpacity, Animated, Dimensions, LayoutAnimation, Platform, UIManager, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, Animated, Dimensions, LayoutAnimation, ActivityIndicator } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,29 +35,30 @@ const normalizeBookData = (book) => {
 };
 
 const Bookpage = () => {
-  if (Platform.OS === 'android') {
-    if (UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-  }
-
-  const selectedBook = useBookStore((state) => state.selectedBook);
-  const setShouldRefresh = useBookStore((state) => state.setShouldRefresh);
-  const setShouldRefreshLikes = useBookStore((state) => state.setShouldRefreshLikes);
-  const removeLastBook = useBookStore((state) => state.removeLastBook);
 
   const { id } = useLocalSearchParams();
 
-  const bookData = normalizeBookData(selectedBook);
   const { user, updateUser } = useGlobalContext();
-  const scrollY = useRef(new Animated.Value(0)).current;
 
-  const [showFullDescription, setShowFullDescription] = useState(false);
+
   const [books, setBooks] = useState([]);
+
+  const selectedBook = useBookStore((state) => state.selectedBook);
+  const bookData = normalizeBookData(selectedBook);
+  const removeLastBook = useBookStore((state) => state.removeLastBook);
+
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
+
+
   const [isLiked, setIsLiked] = useState(false);
   const [isActive, setIsActive] = useState(false);
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const refreshAllLikes = useBookStore((state) => state.refreshAllLikes);
+  const refreshAllActives = useBookStore((state) => state.refreshAllActives);
+
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const scrollY = useRef(new Animated.Value(0)).current;
+
 
 
 
@@ -74,35 +75,6 @@ const Bookpage = () => {
     } catch (error) {
       console.error(error);
       setIsDataLoaded(true); // Setzen Sie es auch im Fehlerfall auf true
-    }
-  };
-
-  const handleBack = () => {
-    removeLastBook();
-    router.back();
-  };
-
-  const handleLikeBook = async () => {
-    try {
-      setIsLiked(!isLiked);
-      await likeBook(user, bookData.id, selectedBook);
-      await updateUser(); // Aktualisiere den User
-      setShouldRefreshLikes(true);
-      setShouldRefresh(true);
-    } catch (error) {
-      setIsLiked(!isLiked); // Revert on error
-      console.error('Error liking book:', error);
-    }
-  };
-  const handleEditActiveBooks = async () => {
-    try {
-      setIsActive(!isActive);
-      await editActiveBooks(user, bookData.id, selectedBook);
-      await updateUser()
-      setShouldRefreshLikes(true);
-      setShouldRefresh(true);
-    } catch (error) {
-      console.error('Error editing active books:', error);
     }
   };
 
@@ -157,7 +129,7 @@ const Bookpage = () => {
               params: {
                 q: `subject:"${bookData.categories[0]}"`,
                 langRestrict: 'de',
-                maxResults: 40,
+                maxResults: 10,
                 orderBy: 'relevance',
                 key: API_KEY
               }
@@ -188,6 +160,37 @@ const Bookpage = () => {
       setLoading(false);
     }
   };
+
+
+  const handleLikeBook = async () => {
+    try {
+      setIsLiked(!isLiked);
+      await likeBook(user, bookData.id, selectedBook);
+      await updateUser(); // Aktualisiere den User
+      refreshAllLikes()
+    } catch (error) {
+      setIsLiked(!isLiked); // Revert on error
+      console.error('Error liking book:', error);
+    }
+  };
+
+  const handleEditActiveBooks = async () => {
+    try {
+      setIsActive(!isActive);
+      await editActiveBooks(user, bookData.id, selectedBook);
+      await updateUser()
+      refreshAllActives()
+    } catch (error) {
+      console.error('Error editing active books:', error);
+    }
+  };
+
+
+  const handleBack = () => {
+    removeLastBook();
+    router.back();
+  };
+
 
   useEffect(() => {
     getBooks();
