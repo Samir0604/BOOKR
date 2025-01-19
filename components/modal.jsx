@@ -18,7 +18,7 @@ import useBookStore from '@/stores/zustandBookHandling';
 // Cache für API-Anfragen
 const apiCache = new Map();
 
-const API_KEY = process.env.API_KEY
+const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
 
 const Modal = ({ books, closeModal, width, slideAnim, likes, setLikes, actives, setActives, scaleAnim, bookIndex, first = false, depth = 0 }) => {
 

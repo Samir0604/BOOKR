@@ -21,10 +21,13 @@ import { useModal } from '@/components/useModal';
 
 const { width } = Dimensions.get('window');
 
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
 
 const home = () => {
   const { user } = useGlobalContext();
+
+
+
 
   const refreshHomeLikes = useBookStore((state) => state.refreshHomeLikes);
   const setRefreshHomeLikes = useBookStore((state) => state.setRefreshHomeLikes);
@@ -40,6 +43,7 @@ const home = () => {
 
   const getRandomCategories = () => {
     let tempArray = [...user.liked_categories];
+
     let result = [];
 
     if (tempArray.length === 0) {
@@ -78,11 +82,21 @@ const home = () => {
       return true;
     }
   };
+  const resetAllStorage = async () => {
+    try {
+      await AsyncStorage.clear();
+      // Bücher neu laden
+      await getBooks();
+      console.log('All storage successfully reset');
+    } catch (error) {
+      console.error('Error clearing storage:', error);
+    }
+  };
 
   async function getBooks() {
     try {
       setLoading(true);
-
+  
       try {
         await account.getSession('current');
       } catch (error) {
@@ -90,7 +104,7 @@ const home = () => {
         setLoading(false);
         return;
       }
-
+  
       const shouldUpdate = await shouldUpdateBooks();
       if (!shouldUpdate) {
         const storedBooks = await AsyncStorage.getItem('weeklyBooks');
@@ -100,10 +114,7 @@ const home = () => {
           return;
         }
       }
-
-      let allBooks = [];
-      const categories = getRandomCategories();
-
+  
       const isValidBook = (book) => {
         return (
           book.volumeInfo?.title &&
@@ -113,7 +124,7 @@ const home = () => {
           book.volumeInfo?.pageCount
         );
       };
-
+  
       const enrichBook = async (book, language = 'de') => {
         try {
           const enrichResponse = await axios.get(
@@ -128,7 +139,7 @@ const home = () => {
               }
             }
           );
-
+  
           if (
             enrichResponse.data?.items?.[0] &&
             isValidBook(enrichResponse.data.items[0])
@@ -141,41 +152,71 @@ const home = () => {
           return book;
         }
       };
-
-      for (const category of categories) {
+  
+      let allBooks = [];
+      const categories = getRandomCategories();
+      const REQUIRED_BOOKS = 6;
+  
+      if (categories === 'No categories available') {
+        setLoading(false);
+        return;
+      }
+  
+      const getBooksPerCategory = (categoryCount) => {
+        switch (categoryCount) {
+          case 1:
+            return [6];
+          case 2:
+            return [3, 3];
+          default:
+            return Array(categoryCount).fill(2);
+        }
+      };
+  
+      let booksPerCategory = getBooksPerCategory(categories.length);
+      let categoryIndex = 0;
+  
+      // Weitermachen bis wir 6 Bücher haben
+      while (allBooks.length < REQUIRED_BOOKS && categoryIndex < categories.length) {
+        const category = categories[categoryIndex];
+        const targetBooksForCategory = booksPerCategory[categoryIndex];
         let validBooksFound = 0;
         let attempts = 0;
-        const maxAttempts = 3;
-
-        while (validBooksFound < 2 && attempts < maxAttempts) {
+        const maxAttempts = 5; // Erhöht von 3 auf 5
+  
+        while (validBooksFound < targetBooksForCategory && attempts < maxAttempts && allBooks.length < REQUIRED_BOOKS) {
           try {
             const response = await axios.get('https://www.googleapis.com/books/v1/volumes', {
               params: {
                 q: `subject:${category}`,
-                maxResults: 10,
+                maxResults: 10, // Erhöht für mehr Optionen
                 orderBy: 'relevance',
                 langRestrict: 'de',
                 key: API_KEY
               }
             });
-
+  
             if (response.data.items && response.data.items.length > 0) {
               const validBooks = response.data.items
                 .filter(isValidBook)
                 .sort(() => Math.random() - 0.5);
-
+  
               for (const book of validBooks) {
-                if (validBooksFound < 2) {
-                  const enrichedBook = await enrichBook(book);
-                  if (isValidBook(enrichedBook)) {
+                if (validBooksFound >= targetBooksForCategory) break;
+  
+                const enrichedBook = await enrichBook(book);
+                if (isValidBook(enrichedBook)) {
+                  const isDuplicate = allBooks.some(
+                    existingBook => existingBook.id === enrichedBook.id
+                  );
+  
+                  if (!isDuplicate) {
                     allBooks.push({
                       ...enrichedBook,
                       subject: category
                     });
                     validBooksFound++;
                   }
-                } else {
-                  break;
                 }
               }
             }
@@ -184,20 +225,38 @@ const home = () => {
           }
           attempts++;
         }
+  
+        // Wenn wir nicht genug Bücher für diese Kategorie gefunden haben,
+        // verteilen wir die restlichen auf die anderen Kategorien
+        if (allBooks.length < REQUIRED_BOOKS && categoryIndex === categories.length - 1) {
+          categoryIndex = 0; // Zurück zur ersten Kategorie
+          // Neue Verteilung der restlichen benötigten Bücher
+          const remainingBooks = REQUIRED_BOOKS - allBooks.length;
+          booksPerCategory = categories.map(() => Math.ceil(remainingBooks / categories.length));
+        } else {
+          categoryIndex++;
+        }
       }
-
-      if (allBooks.length > 0) {
+  
+      // Wenn wir zu viele Bücher haben, schneiden wir sie ab
+      allBooks = allBooks.slice(0, REQUIRED_BOOKS);
+  
+      if (allBooks.length === REQUIRED_BOOKS) {
         await AsyncStorage.setItem('weeklyBooks', JSON.stringify(allBooks));
         await AsyncStorage.setItem('lastBooksUpdate', new Date().toISOString());
         setBooks(allBooks);
+      } else {
+        console.log('Could not find enough books');
       }
-
+  
     } catch (error) {
       console.error('Error in getBooks:', error);
     } finally {
       setLoading(false);
     }
   }
+  
+  
 
   const getLiked = async () => {
     try {
@@ -238,6 +297,7 @@ const home = () => {
       setRefreshHomeLikes(false);
     }
   }, [refreshHomeLikes]);
+
   // Refresh handling actives
   useEffect(() => {
     if (refreshHomeActives) {
@@ -250,9 +310,13 @@ const home = () => {
 
   // Initial load
   useEffect(() => {
+
     getBooks();
     getActive()
     getLiked();
+ 
+
+
   }, [user]);
 
 

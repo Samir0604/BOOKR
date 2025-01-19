@@ -19,7 +19,7 @@ const STORAGE_KEYS = {
 const CACHE_DURATION = 60 * 60 * 1000; // 1 Stunde
 const MAX_CACHE_ITEMS = 50;
 
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
 
 const SearchPage = () => {
   const { input } = useLocalSearchParams();
