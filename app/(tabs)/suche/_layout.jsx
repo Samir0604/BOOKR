@@ -15,6 +15,11 @@ export default function SearchLayout() {
         name="bookpage" // bookpage
         options={{ headerShown: false }}
       />
+
+        <Stack.Screen 
+        name="searchCategories/[category]" // bookpage
+        options={{ headerShown: false }}
+        />
     </Stack>
   );
 }

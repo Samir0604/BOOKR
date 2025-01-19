@@ -9,6 +9,7 @@ import LinearGradientCard from '@/components/LinearGradientCard'
 import Empfehlungen from '@/components/Empfehlungen'
 import { useModal } from '@/components/useModal'
 import Modal from '@/components/modal'
+import { router } from 'expo-router'
 
 const { width } = Dimensions.get('window')
 
@@ -22,6 +23,7 @@ const GenreButton = ({ title, icon }) => (
       shadowRadius: 2,
       elevation: 2,
     }}
+    onPress={()=>router.push(`/suche/searchCategories/${title}`)}
   >
     <Text className="text-xl font-medium text-gray-800">{title}</Text>
     {icon}
@@ -113,7 +115,7 @@ const SearchPage = () => {
                 }}
               >
                 <GenreButton
-                  title="Krimi"
+                  title="Kriminalität"
                   icon={<Text className="text-2xl">🕵🏼‍♂️</Text>}
                 />
                 <GenreButton
