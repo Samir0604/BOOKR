@@ -31,6 +31,10 @@ export default function HomeScreen() {
                 <Link className="font-bold text-2xl" href="settings/support">Konto lan</Link>
                 <Link className="font-bold text-2xl" href="settings/privacy">Konto lan</Link>
                 <Link className="font-bold text-2xl" href="settings/businessInfo">Konto lan</Link>
+                <Link className="font-bold text-2xl" href="settings/changeEmail">EMail</Link>
+                <Link className="font-bold text-2xl" href="settings/deleteAccount">deleteAccount</Link>
+
+
 
 
 

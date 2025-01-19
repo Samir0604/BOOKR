@@ -2,15 +2,23 @@ import { View, Text, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import KontoListing from '@/components/kontoListing'
+import { useGlobalContext } from '@/context/GlobalProvider';
+
 
 export default function Konto() {
+    const { user } = useGlobalContext();
+    
+    console.log(user)
+
+
+
   return (
         <View className='flex-1 bg-white w-full'>
 
 
-            <KontoListing heading="Name" value="Tom Seidel" buttonText="Bearbeiten"/>
-            <KontoListing heading="E-Mail-Adresse" value="tomseidel615@gmail.com" buttonText="Bearbeiten"/>
-            <KontoListing heading="Passwort" value="********" buttonText="Bearbeiten"/>
+            <KontoListing heading="Name" value={user.fullName} buttonText="Bearbeiten" redirect="/settings/changeName"/>
+            <KontoListing heading="E-Mail-Adresse" value={user.email} buttonText="Bearbeiten" redirect="/settings/changeEmail"/>
+            <KontoListing heading="Passwort" value="********" buttonText="Bearbeiten" redirect="/settings/changePassword"/>
             
             <View className='flex flex-row justify-between items-center w-full mt-5 border-b pb-4 px-7 border-[#e0dfdf]'>
                     <View className='flex flex-col gap-1'>

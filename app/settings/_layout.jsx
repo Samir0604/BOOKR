@@ -22,6 +22,13 @@ const SettingsLayout = () => {
         <Stack.Screen name='support' options={{ title: "Support" }} />
         <Stack.Screen name='privacy' options={{ title: "Datenschutz", headerShown:false}} />
         <Stack.Screen name='businessInfo' options={{ title: "Datenschutz", headerShown:false}} />
+        <Stack.Screen name='changePassword' options={{ title: "" }} />
+        <Stack.Screen name='changeName' options={{ title: "Namen Ändern" }} />
+        <Stack.Screen name='changeEmail' options={{ title: "Email Ändern" }} />
+        <Stack.Screen name='deleteAccount' options={{ title: "Account löschen" }} />
+
+
+
 
 
 

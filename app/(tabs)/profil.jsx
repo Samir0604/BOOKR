@@ -4,9 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import LinearGradientCard from '@/components/LinearGradientCard'
 import Logo from '@/assets/logo/TemporaryBOOKRLogo.png'
 import { useGlobalContext } from '@/context/GlobalProvider'
-import { useRootNavigationState } from 'expo-router'
+import { router, useRootNavigationState } from 'expo-router'
 
 import { MaterialIcons, Ionicons } from '@expo/vector-icons'
+import { Logout } from '@/lib/logout'
 
 
 
@@ -27,8 +28,10 @@ import { MaterialIcons, Ionicons } from '@expo/vector-icons'
 // <ProfileStats number="158" label="Lesestunden" />
 
 
-const SettingsButton = ({ setting, icon, onPress }) => (
-  <TouchableOpacity 
+const SettingsButton = ({ setting, icon, route, logout=false  }) => (
+  <TouchableOpacity
+    onPress={logout? ()=>Logout() : ()=>router.push(route)}
+
     className={`flex-row items-center justify-between px-4 py-6 ${setting == 'Ausloggen' ? 'rounded-b-2xl' : 'border-b border-b-[#e5e5e5]'} ${setting == 'Konto' ? 'rounded-t-2xl' : ''}`}
     style={{
       backgroundColor: setting == 'Ausloggen' ? '#FFF5F5' : 'white',
@@ -85,14 +88,11 @@ const profil = () => {
         elevation: 3,
       }}
     >
-      <SettingsButton setting='Konto' icon="person-outline" />
-      <SettingsButton setting='Abonnement' icon="star-outline" />
-      <SettingsButton setting='Benachrichtigungen' icon="notifications-outline" />
-      <SettingsButton setting='Sprache' icon="language" />
-      <SettingsButton setting='FAQ' icon="help-circle-outline" />
-      <SettingsButton setting='Geschäftsbedingungen' icon="document-text-outline" />
-      <SettingsButton setting='Datenschutz' icon="shield-outline" />
-      <SettingsButton setting='Ausloggen' icon="log-out-outline" />
+      <SettingsButton setting='Konto' icon="person-outline" route="settings/konto"/>
+      <SettingsButton setting='Support' icon="help-circle-outline" route="settings/support"/>
+      <SettingsButton setting='Geschäftsbedingungen' icon="document-text-outline" route="settings/businessInfo"/>
+      <SettingsButton setting='Datenschutz' icon="shield-outline" route="settings/privacy"/>
+      <SettingsButton setting='Ausloggen' icon="log-out-outline" logout={true}/>
     </View>
   </View>
 
