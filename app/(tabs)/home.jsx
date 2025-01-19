@@ -9,7 +9,7 @@ import { account } from '@/lib/appwrite';
 
 
 import axios from 'axios';
-
+import useBookStore from '@/stores/zustandBookHandling';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import ZurSammlung from '@/components/ZurSammlung';
 import Empfehlungen from '@/components/Empfehlungen';
@@ -24,10 +24,21 @@ const { width } = Dimensions.get('window');
 const API_KEY = process.env.API_KEY;
 
 const home = () => {
+  const { user } = useGlobalContext();
 
-  const { user } = useGlobalContext()
+  const refreshHomeLikes = useBookStore((state) => state.refreshHomeLikes);
+  const setRefreshHomeLikes = useBookStore((state) => state.setRefreshHomeLikes);
+  const refreshHomeActives = useBookStore((state) => state.refreshHomeActives);
+  const setRefreshHomeActives = useBookStore((state) => state.setRefreshHomeActives);
 
-  function getRandomCategories() {
+
+  const [likes, setLikes] = useState([]);
+  const [actives, setActives] = useState([]);
+
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const getRandomCategories = () => {
     let tempArray = [...user.liked_categories];
     let result = [];
 
@@ -35,7 +46,6 @@ const home = () => {
       return 'No categories available';
     }
 
-    // Bestimme die Anzahl der zu wählenden Kategorien (maximal 3)
     const numberOfCategories = Math.min(3, tempArray.length);
 
     for (let i = 0; i < numberOfCategories; i++) {
@@ -47,46 +57,32 @@ const home = () => {
     return result;
   }
 
-
-  /* Books */
-
-
-  const [books, setBooks] = useState([])
-  const [loading, setLoading] = useState(false)
-
   const shouldUpdateBooks = async () => {
     try {
       const lastUpdate = await AsyncStorage.getItem('lastBooksUpdate');
-      
-      // Prüfe ob eine aktive Session existiert
       const session = await account.getSession('current');
-      
-      // Wenn keine Session existiert oder kein letztes Update, dann Update erforderlich
+
       if (!session || !lastUpdate) return true;
-  
+
       const lastUpdateDate = new Date(lastUpdate);
       const currentDate = new Date();
       const diffTime = Math.abs(currentDate - lastUpdateDate);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-      // Prüfe ob die Session nach dem letzten Update gestartet wurde
+
       const sessionStartTime = new Date(session.$createdAt);
       const hasNewSession = sessionStartTime > lastUpdateDate;
-  
-      // Update wenn 7 Tage vergangen sind ODER eine neue Session existiert
+
       return diffDays >= 7 || hasNewSession;
     } catch (error) {
       console.error('Error checking update time:', error);
       return true;
     }
   };
-  
-  // Modifizierte getBooks Funktion
+
   async function getBooks() {
     try {
       setLoading(true);
-  
-      // Prüfe ob eine aktive Session existiert
+
       try {
         await account.getSession('current');
       } catch (error) {
@@ -94,8 +90,7 @@ const home = () => {
         setLoading(false);
         return;
       }
-  
-      // Prüfen ob gespeicherte Bücher existieren und noch aktuell sind
+
       const shouldUpdate = await shouldUpdateBooks();
       if (!shouldUpdate) {
         const storedBooks = await AsyncStorage.getItem('weeklyBooks');
@@ -105,11 +100,10 @@ const home = () => {
           return;
         }
       }
-  
+
       let allBooks = [];
       const categories = getRandomCategories();
-      
-      // Hilfsfunktion zur Validierung eines Buches
+
       const isValidBook = (book) => {
         return (
           book.volumeInfo?.title &&
@@ -119,8 +113,7 @@ const home = () => {
           book.volumeInfo?.pageCount
         );
       };
-  
-      // Hilfsfunktion zum Enrichment eines Buches
+
       const enrichBook = async (book, language = 'de') => {
         try {
           const enrichResponse = await axios.get(
@@ -131,11 +124,11 @@ const home = () => {
                 langRestrict: language,
                 maxResults: 1,
                 orderBy: 'relevance',
-                key: API_KEY 
+                key: API_KEY
               }
             }
           );
-  
+
           if (
             enrichResponse.data?.items?.[0] &&
             isValidBook(enrichResponse.data.items[0])
@@ -148,35 +141,31 @@ const home = () => {
           return book;
         }
       };
-  
-      // Für jede Kategorie Bücher abrufen
+
       for (const category of categories) {
         let validBooksFound = 0;
         let attempts = 0;
-        const maxAttempts = 3; // Maximale Anzahl von Versuchen pro Kategorie
-        
+        const maxAttempts = 3;
+
         while (validBooksFound < 2 && attempts < maxAttempts) {
           try {
             const response = await axios.get('https://www.googleapis.com/books/v1/volumes', {
               params: {
                 q: `subject:${category}`,
-                maxResults: 40,
+                maxResults: 10,
                 orderBy: 'relevance',
                 langRestrict: 'de',
-                key: API_KEY 
+                key: API_KEY
               }
             });
-  
+
             if (response.data.items && response.data.items.length > 0) {
-              // Filtere valide Bücher
               const validBooks = response.data.items
                 .filter(isValidBook)
                 .sort(() => Math.random() - 0.5);
-  
-              // Nehme die ersten 2 validen Bücher
+
               for (const book of validBooks) {
                 if (validBooksFound < 2) {
-                  // Enrichment für jedes valide Buch
                   const enrichedBook = await enrichBook(book);
                   if (isValidBook(enrichedBook)) {
                     allBooks.push({
@@ -196,14 +185,13 @@ const home = () => {
           attempts++;
         }
       }
-  
-      // Wenn wir genug Bücher haben, speichern und setzen
+
       if (allBooks.length > 0) {
         await AsyncStorage.setItem('weeklyBooks', JSON.stringify(allBooks));
         await AsyncStorage.setItem('lastBooksUpdate', new Date().toISOString());
         setBooks(allBooks);
       }
-  
+
     } catch (error) {
       console.error('Error in getBooks:', error);
     } finally {
@@ -211,16 +199,26 @@ const home = () => {
     }
   }
 
-  
-  // Im useEffect
+  const getLiked = async () => {
+    try {
+      const savedBooks = user.savedBooks.map(book => book.googleBooksId);
 
-  useEffect(() => {
-    getBooks();
-    
-  }, [])
+      setLikes(savedBooks);
+    } catch (error) {
+      console.error('Error getting liked books:', error);
+    }
+  };
 
+  const getActive = async () => {
+    try {
+      const activeBooks = user.activeBooks.map(book => book.googleBooksId);
 
-  /* Modal */
+      setActives(activeBooks);
+    } catch (error) {
+      console.error('Error getting liked books:', error);
+    }
+  };
+
 
   const {
     modalVisible,
@@ -230,6 +228,33 @@ const home = () => {
     openModal,
     closeModal
   } = useModal();
+
+
+  // Refresh handling likes
+  useEffect(() => {
+    if (refreshHomeLikes) {
+      getLiked();
+
+      setRefreshHomeLikes(false);
+    }
+  }, [refreshHomeLikes]);
+  // Refresh handling actives
+  useEffect(() => {
+    if (refreshHomeActives) {
+
+      getActive()
+
+      setRefreshHomeActives(false);
+    }
+  }, [refreshHomeActives]);
+
+  // Initial load
+  useEffect(() => {
+    getBooks();
+    getActive()
+    getLiked();
+  }, [user]);
+
 
   return (
     <>
@@ -291,7 +316,21 @@ const home = () => {
         </SafeAreaView>
       </ScrollView >
       {/* Ausserhalb aller sachen da es sonst nicht mit dem padding der safeareaview klappt */}
-      {modalVisible ? <Modal books={books} closeModal={closeModal} width={width} slideAnim={slideAnim} scaleAnim={scaleAnim} bookIndex={bookIndex} first={true} /> : null}
+      {modalVisible ? (
+        <Modal
+          books={books}
+          closeModal={closeModal}
+          likes={likes}
+          setLikes={setLikes}
+          actives={actives}
+          setActives={setActives}
+          width={width}
+          slideAnim={slideAnim}
+          scaleAnim={scaleAnim}
+          bookIndex={bookIndex}
+          first={true}
+        />
+      ) : null}
       {/* books um das jeweilige book am index der flatlist zu displayen, restlichen daten für css code, der bookindex für den  initialScrollIndex={bookIndex} damit die flatlist weiss zu welchem buch sie springen muss wenn ich eins anklicke  */}
     </>
   )

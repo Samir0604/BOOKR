@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Animated, Image, FlatList, ScrollView, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Image, FlatList, ScrollView, LayoutAnimation } from 'react-native';
 import axios from 'axios';
 import Feather from '@expo/vector-icons/Feather';
 import { BlurView } from 'expo-blur';
 
 import { useGlobalContext } from '@/context/GlobalProvider';
 
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, Ionicons } from '@expo/vector-icons';
 
 import Empfehlungen from './Empfehlungen';
 import { useModal } from './useModal';
@@ -14,33 +14,36 @@ import { useModal } from './useModal';
 import likeBook from '@/lib/buchMerken';
 import editActiveBooks from '@/lib/editActiveBooks';
 import useBookStore from '@/stores/zustandBookHandling';
+
 // Cache für API-Anfragen
 const apiCache = new Map();
 
 const API_KEY = process.env.API_KEY
 
-const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, first = false, depth = 0 }) => {
-  const { user } = useGlobalContext();
-  const [recommendations, setRecommendations] = useState([]);
-  const [loading, setLoading] = useState(false);
+const Modal = ({ books, closeModal, width, slideAnim, likes, setLikes, actives, setActives, scaleAnim, bookIndex, first = false, depth = 0 }) => {
 
   const itemWidth = width * 0.92;
   const itemMargin = width * 0.02;
   const snapInterval = itemWidth + itemMargin;
 
-  const {
-    modalVisible: innerModalVisible,
-    bookIndex: innerBookIndex,
-    slideAnim: innerSlideAnim,
-    scaleAnim: innerScaleAnim,
-    openModal: openInnerModal,
-    closeModal: closeInnerModal
-  } = useModal();
+  const { user } = useGlobalContext();
 
   const MAX_DEPTH = 3;
   const scrollViewRef = useRef(null);
 
+  const [currentBookIndex, setCurrentBookIndex] = useState(bookIndex);
+
+  const [showFullDescriptionMap, setShowFullDescriptionMap] = useState(new Map());
+
+  const [recommendations, setRecommendations] = useState([]);
   const [recommendationsMap, setRecommendationsMap] = useState(new Map());
+
+  const [loading, setLoading] = useState(false);
+
+  const setRefreshBib = useBookStore((state) => state.setRefreshBib);
+  const refreshBibAndBookProgress = useBookStore((state) => state.refreshBibAndBookProgress);
+
+ 
 
   const getRecommendations = async (book, currentIndex) => {
     if (!book) return;
@@ -76,8 +79,9 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           params: {
             q: `inauthor:"${authors[0]}" `,
             langRestrict: language,
-            maxResults: 40,
+            maxResults: 10,
             orderBy: 'relevance',
+            key: API_KEY
           }
         });
 
@@ -107,8 +111,9 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
         params: {
           q: `subject:"${subject}" subject:"${categories[0] || ''}"`,
           langRestrict: language,
-          maxResults: 40,
+          maxResults: 10,
           orderBy: 'relevance',
+          key: API_KEY
         }
       });
 
@@ -144,6 +149,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                 langRestrict: language,
                 maxResults: 1,
                 orderBy: 'relevance',
+                key: API_KEY
               }
             });
 
@@ -177,27 +183,46 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
   };
 
 
-  // Lade Empfehlungen wenn sich der Index ändert
-  const [currentBookIndex, setCurrentBookIndex] = useState(bookIndex);
-
-  const setShouldRefresh = useBookStore((state) => state.setShouldRefresh);
-
-  // Modify your likeBook and editActiveBooks functions to trigger a refresh
+  // Modifizierte handleLikeBook Funktion
   const handleLikeBook = async (user, item) => {
-    await likeBook(user, item.id, item);
-    setShouldRefresh(true); // Trigger refresh in bibliothek
+    try {
+      const isCurrentlyLiked = likes.includes(item.id);
+
+      // Optimistic update
+      if (isCurrentlyLiked) {
+        // Remove from likes
+        setLikes(prevLikes => prevLikes.filter(id => id !== item.id));
+      } else {
+        // Add to likes
+        setLikes(prevLikes => [...prevLikes, item.id]);
+      }
+
+      await likeBook(user, item.id, item);
+      setRefreshBib(true)
+    } catch (error) {
+      // Revert on error
+      if (isCurrentlyLiked) {
+        setLikes(prevLikes => [...prevLikes, item.id]);
+      } else {
+        setLikes(prevLikes => prevLikes.filter(id => id !== item.id));
+      }
+      console.error('Error liking book:', error);
+    }
   };
 
   const handleEditActiveBooks = async (user, item) => {
+    const isCurrentlyActive = actives.includes(item.id)
+    if (isCurrentlyActive) {
+      // Remove from likes
+      setActives(prevActives => prevActives.filter(id => id !== item.id));
+    } else {
+      // Add to likes
+      setActives(prevActives => [...prevActives, item.id]);
+    }
     await editActiveBooks(user, item.id, item);
-    setShouldRefresh(true); // Trigger refresh in bibliothek
+    refreshBibAndBookProgress()
   };
 
-  useEffect(() => {
-    if (books[currentBookIndex]) {
-      getRecommendations(books[currentBookIndex], currentBookIndex);
-    }
-  }, [currentBookIndex]);
 
   // FlatList onViewableItemsChanged Handler
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
@@ -206,6 +231,26 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
       setCurrentBookIndex(newIndex);
     }
   }).current;
+
+  const toggleDescription = (index) => {
+    LayoutAnimation.configureNext(
+      LayoutAnimation.create(
+        400,
+        LayoutAnimation.Types.easeInEaseOut,
+        LayoutAnimation.Properties.opacity
+      )
+    );
+    setShowFullDescriptionMap(prev => new Map(prev).set(index, true));
+  };
+
+  const {
+    modalVisible: innerModalVisible,
+    bookIndex: innerBookIndex,
+    slideAnim: innerSlideAnim,
+    scaleAnim: innerScaleAnim,
+    openModal: openInnerModal,
+    closeModal: closeInnerModal
+  } = useModal();
 
 
   // Reset recommendations und Cache wenn sich das Buch ändert
@@ -216,6 +261,11 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
       getRecommendations(books[bookIndex]);
     }
   }, [bookIndex, books]);
+  useEffect(() => {
+    if (books[currentBookIndex]) {
+      getRecommendations(books[currentBookIndex], currentBookIndex);
+    }
+  }, [currentBookIndex]);
 
   return (
     <>
@@ -269,8 +319,10 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
             index
           })}
           initialScrollIndex={bookIndex}
-          renderItem={({ item, index }) => (
-            <View
+          renderItem={({ item, index }) => {
+            const showFullDescription = showFullDescriptionMap.get(index) || false;
+
+            return <View
               className="bg-[#F2F2F2] rounded-t-2xl mt-20 pt-1 pb-4 relative"
               style={{
                 width: itemWidth,
@@ -346,15 +398,23 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                       className="flex-row gap-2 bg-black py-2 px-4 w-7/12 h-12 items-center justify-center rounded-full"
                     >
                       <Text className="text-white font-bold text-lg">zur Leseliste</Text>
-                      <Feather name="bookmark" size={24} color="white" />
+                      {likes.includes(item.id) ?
+                        <Ionicons name="bookmark" size={24} color="white" /> :
+                        <Ionicons name="bookmark-outline" size={24} color="white" />
+                      }
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      onPress={() => handleEditActiveBooks(user,item)}
+                      onPress={() => handleEditActiveBooks(user, item)}
                       className="flex-row gap-2 bg-[#2DA786] px-4 w-7/12 h-12 items-center justify-center rounded-full"
                     >
-                      <Text className="text-white font-bold text-lg">Lesen</Text>
-                      <Feather name="book-open" size={24} color="white" />
+                      <Text className="text-white font-bold text-lg">
+                        {actives.includes(item.id) ? 'Am Lesen...' : 'Lesen'}
+                      </Text>
+                      {actives.includes(item.id) ?
+                        <Feather name="book-open" size={24} color="white" /> :
+                        <Feather name="book" size={24} color="white" />
+                      }
                     </TouchableOpacity>
                   </View>
 
@@ -366,9 +426,42 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                     Beschreibung
                   </Text>
 
-                  <Text className="text-gray-500 mt-2 mb-12 text-justify">
-                    {item.volumeInfo.description}
-                  </Text>
+                  <View>
+                    <Text
+                      className="text-gray-500 mt-2 text-justify"
+                      style={{
+                        opacity: showFullDescription ? 1 : 0.95,
+                      }}
+                    >
+                      {item.volumeInfo.description && (showFullDescription
+                        ? item.volumeInfo.description
+                        : item.volumeInfo.description?.substring(0, 500) + "..."
+                      )}
+                    </Text>
+                    {item.volumeInfo.description &&
+                      item.volumeInfo.description.length > 500 &&
+                      !showFullDescription && (
+                        <TouchableOpacity
+                          onPress={() => toggleDescription(index)}
+                          className="mt-2 mb-2"
+                        >
+                          <View className="flex items-center justify-center">
+                            <Text className="text-[#2DA786] font-bold text-base mt-2">
+                              Mehr lesen
+                            </Text>
+                            <AntDesign
+                              name="down"
+                              size={16}
+                              color="#2DA786"
+                              style={{ marginTop: 4 }}
+                            />
+                          </View>
+                        </TouchableOpacity>
+                      )}
+                    {item.volumeInfo.description && (
+                      <View className="mb-12" />
+                    )}
+                  </View>
                 </View>
 
                 {depth < 2 && (
@@ -386,7 +479,7 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
                 )}
               </ScrollView>
             </View>
-          )}
+          }}
         />
       </Animated.View>
 
@@ -399,6 +492,10 @@ const Modal = ({ books, closeModal, width, slideAnim, scaleAnim, bookIndex, firs
           scaleAnim={innerScaleAnim}
           bookIndex={innerBookIndex}
           depth={depth + 1}
+          likes={likes}
+          setLikes={setLikes}
+          actives={actives}
+          setActives={setActives}
         />
       )}
     </>

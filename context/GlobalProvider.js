@@ -1,6 +1,5 @@
 import { getCurrentUser } from "@/lib/auth";
 import { createContext, useContext } from "react";
-//import { getCurrentUser } from "@/lib/appwrite";
 import { useState, useEffect } from "react";
 
 const GlobalContext = createContext();
@@ -27,14 +26,37 @@ export const GlobalProvider = ({ children }) => {
     }
   };
 
+  // Füge die updateUser Funktion hinzu
+  const updateUser = async () => {
+    try {
+      const res = await getCurrentUser();
+      if (res) {
+        setUser(res);
+        return res;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     fetchUser();
   }, []);
 
-
-
-  return <GlobalContext.Provider value={{ isLoggedIn, setIsLoggedIn, user, setUser, isLoading }}>{children}
-  </GlobalContext.Provider>;
+  return (
+    <GlobalContext.Provider 
+      value={{ 
+        isLoggedIn, 
+        setIsLoggedIn, 
+        user, 
+        setUser, 
+        isLoading,
+        updateUser // Exportiere die updateUser Funktion
+      }}
+    >
+      {children}
+    </GlobalContext.Provider>
+  );
 }
 
 export const useGlobalContext = () => {
@@ -45,4 +67,3 @@ export const useGlobalContext = () => {
   }
   return context;
 }
-

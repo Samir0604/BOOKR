@@ -82,8 +82,8 @@ export default function BookProgress() {
     return text;
   }
 
-  const shouldRefresh = useBookStore((state) => state.shouldRefresh);
-  const setShouldRefresh = useBookStore((state) => state.setShouldRefresh);
+  const refreshHomeBookProgress = useBookStore((state) => state.refreshHomeBookProgress);
+  const setRefreshHomeBookProgress = useBookStore((state) => state.setRefreshHomeBookProgress);
 
   async function fetchData() {
     setIsLoading(true);
@@ -106,19 +106,20 @@ export default function BookProgress() {
       console.log("Fehler beim Laden der Daten:", error);
     } finally {
       setIsLoading(false);
-      setShouldRefresh(false); // Reset shouldRefresh after fetching data
     }
   }
 
   useEffect(() => {
     fetchData();
-  }, [user]);
+  }, []); // lieber inital anstatt mit [user] da ich nachdem ich was in [id] ändere updateuser mache, und das dann wenn ich über bookprogress was like sich immer unnötig neuladen würde
+
 
   useEffect(() => {
-    if (shouldRefresh) {
-      fetchData();
+    if (refreshHomeBookProgress) {
+      fetchData()
+      setRefreshHomeBookProgress(false);
     }
-  }, [shouldRefresh]);
+  }, [refreshHomeBookProgress]);
 
   if (isLoading) {
     return (
